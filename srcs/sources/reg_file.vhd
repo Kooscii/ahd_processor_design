@@ -21,6 +21,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -44,8 +45,21 @@ entity reg_file is
 end reg_file;
 
 architecture Behavioral of reg_file is
+    TYPE REGF IS ARRAY (0 TO 31) OF STD_LOGIC_VECTOR(31 DOWNTO 0);
+    signal reg : REGF;
 
 begin
 
+process (clk, rst)
+begin
+    if (rst = '1') then reg <= (OTHERS => "00000000000000000000000000000000");
+    elsif (clk'event and clk = '1') then
+        if (we = '1') then reg(CONV_INTEGER(rd(4 DOWNTO 0))) <= wd(31 DOWNTO 0);
+        end if;
+    end if;
+end process;
+
+rd1 <= reg(CONV_INTEGER(rs(4 DOWNTO 0)));
+rd2 <= reg(CONV_INTEGER(rt(4 DOWNTO 0)));
 
 end Behavioral;
