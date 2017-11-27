@@ -45,5 +45,9 @@ architecture Behavioral of seg_led is
 
 begin
 
+    seg <= seg_din(6 downto 0);
+    dp <= seg_din(7);
+    an <= (others=>'0');
+    led <= led_din(15 downto 0);
 
 end Behavioral;
