@@ -4,7 +4,15 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity cpu is
    Port ( clk : in std_logic;
-          rst : in std_logic);
+          rst : in std_logic;
+          sw : in std_logic_vector (15 downto 0);
+          led : out std_logic_vector (15 downto 0);
+          btn : in std_logic_vector (4 downto 0);
+          -- 7-seg
+          seg : out std_logic_vector (6 downto 0);
+          an : out std_logic_vector (3 downto 0);
+          dp : out std_logic
+          );
 end cpu;
 
 architecture Behavioral of cpu is
@@ -35,7 +43,10 @@ architecture Behavioral of cpu is
                rs : in STD_LOGIC_VECTOR (4 downto 0);
                rt : in STD_LOGIC_VECTOR (4 downto 0);
                rd : in STD_LOGIC_VECTOR (4 downto 0);
-               wd : in STD_LOGIC_VECTOR (31 downto 0));
+               wd : in STD_LOGIC_VECTOR (31 downto 0);
+               r31 : in STD_LOGIC_VECTOR (31 downto 0); -- read-only
+               r30 : out STD_LOGIC_VECTOR (31 downto 0);
+               r29 : out STD_LOGIC_VECTOR (31 downto 0));
     end component;
     
     component alu is
@@ -58,6 +69,23 @@ architecture Behavioral of cpu is
                we : in STD_LOGIC;
                addr : in STD_LOGIC_VECTOR (31 downto 0);
                wd : in STD_LOGIC_VECTOR (31 downto 0));
+    end component;
+    
+    component debounce is
+        Port ( clk : STD_LOGIC;
+               din : in STD_LOGIC;
+               dout : out STD_LOGIC
+             );
+    end component;
+    
+    component seg_led is
+        Port ( seg_din : in STD_LOGIC_VECTOR (31 downto 0);
+               led_din : in STD_LOGIC_VECTOR (31 downto 0);
+               seg : out STD_LOGIC_VECTOR (6 downto 0);
+               dp : out STD_LOGIC;
+               an : out std_logic_vector (3 downto 0);
+               led : out STD_LOGIC_VECTOR (31 downto 0);
+               clk : in STD_LOGIC);
     end component;
     
     -- pc
@@ -100,7 +128,14 @@ architecture Behavioral of cpu is
     signal alu_eq : std_logic;
     
     -- data memory
-    signal mem_rd : std_logic_vector (31 downto 0);    
+    signal mem_rd : std_logic_vector (31 downto 0);  
+    
+    -- btn & sw debouncing
+    signal r31_debounced : std_logic_vector (31 downto 0);
+    
+    -- 7-seg and led display
+    signal seg_din : std_logic_vector (31 downto 0);
+    signal led_din : std_logic_vector (31 downto 0);
 
 begin
 
@@ -164,7 +199,42 @@ begin
                    rs => inst_rs,
                    rt => inst_rt,
                    rd => reg_dst,
-                   wd => reg_wd);
+                   wd => reg_wd,
+                   r31 => r31_debounced,
+                   r30 => seg_din,
+                   r29 => led_din);
+                   
+    r31_debounced(31 downto 21) <= (others=>'0');
+    U_debounce20 : debounce port map (clk=>clk, din=>btn(4), dout=>r31_debounced(20));
+    U_debounce19 : debounce port map (clk=>clk, din=>btn(3), dout=>r31_debounced(19));
+    U_debounce18 : debounce port map (clk=>clk, din=>btn(2), dout=>r31_debounced(18));
+    U_debounce17 : debounce port map (clk=>clk, din=>btn(1), dout=>r31_debounced(17));
+    U_debounce16 : debounce port map (clk=>clk, din=>btn(0), dout=>r31_debounced(16));
+    U_debounce15 : debounce port map (clk=>clk, din=>sw(15), dout=>r31_debounced(15));
+    U_debounce14 : debounce port map (clk=>clk, din=>sw(14), dout=>r31_debounced(14));
+    U_debounce13 : debounce port map (clk=>clk, din=>sw(13), dout=>r31_debounced(13));
+    U_debounce12 : debounce port map (clk=>clk, din=>sw(12), dout=>r31_debounced(12));
+    U_debounce11 : debounce port map (clk=>clk, din=>sw(11), dout=>r31_debounced(11));
+    U_debounce10 : debounce port map (clk=>clk, din=>sw(10), dout=>r31_debounced(10));
+    U_debounce9 : debounce port map (clk=>clk, din=>sw(9), dout=>r31_debounced(9));
+    U_debounce8 : debounce port map (clk=>clk, din=>sw(8), dout=>r31_debounced(8));
+    U_debounce7 : debounce port map (clk=>clk, din=>sw(7), dout=>r31_debounced(7));
+    U_debounce6 : debounce port map (clk=>clk, din=>sw(6), dout=>r31_debounced(6));
+    U_debounce5 : debounce port map (clk=>clk, din=>sw(5), dout=>r31_debounced(5));
+    U_debounce4 : debounce port map (clk=>clk, din=>sw(4), dout=>r31_debounced(4));
+    U_debounce3 : debounce port map (clk=>clk, din=>sw(3), dout=>r31_debounced(3));
+    U_debounce2 : debounce port map (clk=>clk, din=>sw(2), dout=>r31_debounced(2));
+    U_debounce1 : debounce port map (clk=>clk, din=>sw(1), dout=>r31_debounced(1));
+    U_debounce0 : debounce port map (clk=>clk, din=>sw(0), dout=>r31_debounced(0));
+                  
+    U_seg_led : seg_led
+        Port map ( seg_din => seg_din,
+                   led_din => led_din,
+                   seg => seg,
+                   dp => dp,
+                   an => an,
+                   led => led,
+                   clk => clk);
                    
     with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_rd2 when others;
     U_alu : alu 
