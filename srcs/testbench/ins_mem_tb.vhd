@@ -57,6 +57,19 @@ ARCHITECTURE behavior OF ins_mem_tb IS
 	signal clk : std_logic;
  
    constant clk_period : time := 100 ns;
+   
+   -- memory
+   type memory is array(0 to 7) of STD_LOGIC_VECTOR (31 downto 0);
+   signal myMem: memory:= (
+       X"00000001",
+       X"00000010",
+       X"00000100",
+       X"00001000",
+       X"00010000",
+       X"00100000",
+       X"01000000",
+       X"10000000"
+       );
  
 BEGIN
  
