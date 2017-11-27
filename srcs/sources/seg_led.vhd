@@ -37,7 +37,7 @@ entity seg_led is
            seg : out STD_LOGIC_VECTOR (6 downto 0);
            dp : out STD_LOGIC;
            an : out std_logic_vector (3 downto 0);
-           led : out STD_LOGIC_VECTOR (31 downto 0);
+           led : out STD_LOGIC_VECTOR (15 downto 0);
            clk : in STD_LOGIC);
 end seg_led;
 

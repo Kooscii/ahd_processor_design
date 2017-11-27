@@ -46,7 +46,7 @@ architecture Behavioral of debounce is
     
 begin
     
-    process (clk)
+    process (clk, rst)
         variable t : integer := 0;
     begin
     

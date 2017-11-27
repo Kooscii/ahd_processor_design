@@ -72,7 +72,8 @@ architecture Behavioral of cpu is
     end component;
     
     component debounce is
-        Port ( clk : STD_LOGIC;
+        Port ( clk : in STD_LOGIC;
+               rst : in STD_LOGIC;
                din : in STD_LOGIC;
                dout : out STD_LOGIC
              );
@@ -84,7 +85,7 @@ architecture Behavioral of cpu is
                seg : out STD_LOGIC_VECTOR (6 downto 0);
                dp : out STD_LOGIC;
                an : out std_logic_vector (3 downto 0);
-               led : out STD_LOGIC_VECTOR (31 downto 0);
+               led : out STD_LOGIC_VECTOR (15 downto 0);
                clk : in STD_LOGIC);
     end component;
     
@@ -205,27 +206,27 @@ begin
                    r29 => led_din);
                    
     r31_debounced(31 downto 21) <= (others=>'0');
-    U_debounce20 : debounce port map (clk=>clk, din=>btn(4), dout=>r31_debounced(20));
-    U_debounce19 : debounce port map (clk=>clk, din=>btn(3), dout=>r31_debounced(19));
-    U_debounce18 : debounce port map (clk=>clk, din=>btn(2), dout=>r31_debounced(18));
-    U_debounce17 : debounce port map (clk=>clk, din=>btn(1), dout=>r31_debounced(17));
-    U_debounce16 : debounce port map (clk=>clk, din=>btn(0), dout=>r31_debounced(16));
-    U_debounce15 : debounce port map (clk=>clk, din=>sw(15), dout=>r31_debounced(15));
-    U_debounce14 : debounce port map (clk=>clk, din=>sw(14), dout=>r31_debounced(14));
-    U_debounce13 : debounce port map (clk=>clk, din=>sw(13), dout=>r31_debounced(13));
-    U_debounce12 : debounce port map (clk=>clk, din=>sw(12), dout=>r31_debounced(12));
-    U_debounce11 : debounce port map (clk=>clk, din=>sw(11), dout=>r31_debounced(11));
-    U_debounce10 : debounce port map (clk=>clk, din=>sw(10), dout=>r31_debounced(10));
-    U_debounce9 : debounce port map (clk=>clk, din=>sw(9), dout=>r31_debounced(9));
-    U_debounce8 : debounce port map (clk=>clk, din=>sw(8), dout=>r31_debounced(8));
-    U_debounce7 : debounce port map (clk=>clk, din=>sw(7), dout=>r31_debounced(7));
-    U_debounce6 : debounce port map (clk=>clk, din=>sw(6), dout=>r31_debounced(6));
-    U_debounce5 : debounce port map (clk=>clk, din=>sw(5), dout=>r31_debounced(5));
-    U_debounce4 : debounce port map (clk=>clk, din=>sw(4), dout=>r31_debounced(4));
-    U_debounce3 : debounce port map (clk=>clk, din=>sw(3), dout=>r31_debounced(3));
-    U_debounce2 : debounce port map (clk=>clk, din=>sw(2), dout=>r31_debounced(2));
-    U_debounce1 : debounce port map (clk=>clk, din=>sw(1), dout=>r31_debounced(1));
-    U_debounce0 : debounce port map (clk=>clk, din=>sw(0), dout=>r31_debounced(0));
+    U_debounce20 : debounce port map (clk=>clk, rst=>rst, din=>btn(4), dout=>r31_debounced(20));
+    U_debounce19 : debounce port map (clk=>clk, rst=>rst, din=>btn(3), dout=>r31_debounced(19));
+    U_debounce18 : debounce port map (clk=>clk, rst=>rst, din=>btn(2), dout=>r31_debounced(18));
+    U_debounce17 : debounce port map (clk=>clk, rst=>rst, din=>btn(1), dout=>r31_debounced(17));
+    U_debounce16 : debounce port map (clk=>clk, rst=>rst, din=>btn(0), dout=>r31_debounced(16));
+    U_debounce15 : debounce port map (clk=>clk, rst=>rst, din=>sw(15), dout=>r31_debounced(15));
+    U_debounce14 : debounce port map (clk=>clk, rst=>rst, din=>sw(14), dout=>r31_debounced(14));
+    U_debounce13 : debounce port map (clk=>clk, rst=>rst, din=>sw(13), dout=>r31_debounced(13));
+    U_debounce12 : debounce port map (clk=>clk, rst=>rst, din=>sw(12), dout=>r31_debounced(12));
+    U_debounce11 : debounce port map (clk=>clk, rst=>rst, din=>sw(11), dout=>r31_debounced(11));
+    U_debounce10 : debounce port map (clk=>clk, rst=>rst, din=>sw(10), dout=>r31_debounced(10));
+    U_debounce9 : debounce port map (clk=>clk, rst=>rst, din=>sw(9), dout=>r31_debounced(9));
+    U_debounce8 : debounce port map (clk=>clk, rst=>rst, din=>sw(8), dout=>r31_debounced(8));
+    U_debounce7 : debounce port map (clk=>clk, rst=>rst, din=>sw(7), dout=>r31_debounced(7));
+    U_debounce6 : debounce port map (clk=>clk, rst=>rst, din=>sw(6), dout=>r31_debounced(6));
+    U_debounce5 : debounce port map (clk=>clk, rst=>rst, din=>sw(5), dout=>r31_debounced(5));
+    U_debounce4 : debounce port map (clk=>clk, rst=>rst, din=>sw(4), dout=>r31_debounced(4));
+    U_debounce3 : debounce port map (clk=>clk, rst=>rst, din=>sw(3), dout=>r31_debounced(3));
+    U_debounce2 : debounce port map (clk=>clk, rst=>rst, din=>sw(2), dout=>r31_debounced(2));
+    U_debounce1 : debounce port map (clk=>clk, rst=>rst, din=>sw(1), dout=>r31_debounced(1));
+    U_debounce0 : debounce port map (clk=>clk, rst=>rst, din=>sw(0), dout=>r31_debounced(0));
                   
     U_seg_led : seg_led
         Port map ( seg_din => seg_din,
