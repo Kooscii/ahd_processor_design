@@ -26,6 +26,7 @@ architecture Behavioral of cpu is
         Port ( lw : out STD_LOGIC;
                sw : out STD_LOGIC;
                branch : out STD_LOGIC;
+               bnc_type : out STD_LOGIC_VECTOR (1 downto 0);
                jump : out STD_LOGIC;
                funct : out STD_LOGIC_VECTOR (2 downto 0);
                op2src : out STD_LOGIC;
@@ -52,6 +53,7 @@ architecture Behavioral of cpu is
     component alu is
         Port ( result : out STD_LOGIC_VECTOR (31 downto 0);
                eq : out STD_LOGIC;
+               lt : out STD_LOGIC;
                op1 : in STD_LOGIC_VECTOR (31 downto 0);
                op2 : in STD_LOGIC_VECTOR (31 downto 0);
                funct : in STD_LOGIC_VECTOR (2 downto 0));
@@ -94,7 +96,8 @@ architecture Behavioral of cpu is
     signal pc_pl4 : unsigned (31 downto 0);
     signal pc_offset : unsigned (31 downto 0);
     signal pc_addr : unsigned (25 downto 0);
-    signal pc_src : std_logic_vector (1 downto 0);    
+    signal pc_src : std_logic_vector (1 downto 0);  
+    signal bnc_type : std_logic_vector (1 downto 0);  
     
     -- instruction
     signal inst : std_logic_vector (31 downto 0);
@@ -126,7 +129,9 @@ architecture Behavioral of cpu is
     signal imm_sign_ext : std_logic_vector (31 downto 0);
     signal alu_op2 : std_logic_vector (31 downto 0);
     signal alu_result : std_logic_vector (31 downto 0);
+    signal alu_condi : std_logic;
     signal alu_eq : std_logic;
+    signal alu_lt : std_logic;
     
     -- data memory
     signal mem_rd : std_logic_vector (31 downto 0);  
@@ -145,7 +150,7 @@ begin
     pc_offset <= UNSIGNED(imm_sign_ext(29 downto 0)&"00");
     pc_addr <= UNSIGNED(inst_addr);
     pc_src(0) <= ctrl_jump;
-    pc_src(1) <= (ctrl_branch and alu_eq) or (ctrl_branch and ctrl_jump);
+    pc_src(1) <= ctrl_branch and (alu_condi or ctrl_jump);
     
     PC_SYNC : process(clk, rst)
     begin
@@ -179,10 +184,12 @@ begin
        port map ( inst => inst,
                   addr => std_logic_vector(pc));
     
+    with bnc_type select alu_condi <= alu_eq when "11", not alu_eq when "01", alu_lt when "10", '0' when others;
     U_ctrl_unit : ctrl_unit
         port map ( lw => ctrl_lw,
                    sw => ctrl_sw,
                    branch => ctrl_branch,
+                   bnc_type => bnc_type,
                    jump => ctrl_jump,
                    funct => ctrl_funct,
                    op2src => ctrl_op2src,
@@ -241,6 +248,7 @@ begin
     U_alu : alu 
         port map ( result => alu_result,
                    eq => alu_eq,
+                   lt => alu_lt,
                    op1 => reg_rd1,
                    op2 => alu_op2,
                    funct => ctrl_funct);

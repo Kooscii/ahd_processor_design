@@ -34,6 +34,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity alu is
     Port ( result : out STD_LOGIC_VECTOR (31 downto 0);
            eq : out STD_LOGIC;
+           lt : out STD_LOGIC;
            op1 : in STD_LOGIC_VECTOR (31 downto 0);
            op2 : in STD_LOGIC_VECTOR (31 downto 0);
            funct : in STD_LOGIC_VECTOR (2 downto 0));
