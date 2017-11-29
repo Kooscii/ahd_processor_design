@@ -61,8 +61,8 @@ begin
         if we = '1' and TO_INTEGER( unsigned(rd)) < 31 then 
             reg( TO_INTEGER( unsigned(rd))) <= wd;
         end if;
-        reg(31) <= r31;
     end if;
+    reg(31) <= r31;
 end process;
 
 rd1 <= reg( TO_INTEGER( unsigned(rs)));
