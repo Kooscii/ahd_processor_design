@@ -44,6 +44,8 @@ architecture Behavioral of alu is
     
     signal lsft : std_logic_vector (31 downto 0);
     signal rsft : std_logic_vector (31 downto 0);
+    signal op1_ext : signed (32 downto 0);
+    signal op2_ext : signed (32 downto 0);
     signal diff : signed (32 downto 0);
 
 begin
@@ -128,7 +130,9 @@ begin
         std_logic_vector(TO_UNSIGNED(0, 31)) & op1(31) when 31,
         std_logic_vector(TO_UNSIGNED(0, 32)) when others;
         
-        diff <= TO_SIGNED((TO_INTEGER(signed(op1)) - TO_INTEGER(signed(op2))), 33);
+        op1_ext <= TO_SIGNED( TO_INTEGER( signed(op1) ), 33);
+        op2_ext <= TO_SIGNED( TO_INTEGER( signed(op2) ), 33);
+        diff <= signed(op1_ext) - signed(op2_ext);
         with TO_INTEGER(diff) select eq <= '1' when 0, '0' when others;
         with diff(32) select lt <= '1' when '1', '0' when others;
 
