@@ -86,7 +86,7 @@ begin
 sig_addr <= addr(8 downto 2);
 
    
-	process (clk, rst, we)
+	process (clk, rst)
 	begin
 	  ---Reset all to 0x0 when rst is HIGH
 	  if (rst = '1')  then
