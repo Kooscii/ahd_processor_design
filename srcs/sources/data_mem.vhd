@@ -50,9 +50,9 @@ end data_mem;
 
 architecture Behavioral of data_mem is
 
---------------------------------------------------------------------------------
-----									DATA MEMORY												 ----
---------------------------------------------------------------------------------
+-------------------------------------------------------
+----			 DATA MEMORY								    ---
+-------------------------------------------------------
 ---Yiren DAI(yd1257)'s comments and questions:
 ---I don't have a solid knowledge of Data Memory. If I understand is question
 ---wrongly, I apologize for that...
@@ -64,14 +64,14 @@ architecture Behavioral of data_mem is
 
 type DATA_MEMORY is array(0 to 127) of std_logic_vector(31 downto 0);
 
---------------------------------------------------------------------------------
-----						   ASSIGN DATA MEMORY TO SIGNAL							    ----
---------------------------------------------------------------------------------
+-------------------------------------------------------
+----			ASSIGN DATA MEMORY TO SIGNAL			   ----
+-------------------------------------------------------
 signal data_mem : DATA_MEMORY;
 
---------------------------------------------------------------------------------
-----						   	INTERNAL DECLARATION									    ----
---------------------------------------------------------------------------------
+-------------------------------------------------------
+----			INTERNAL DECLARATION						   ----
+-------------------------------------------------------
 ---Yiren DAI(yd1257)'s comments and questions:
 ---I created this signal to receive the 8 downto 2 (7 digits) from addr
 signal sig_addr : std_logic_vector(6 downto 0);
