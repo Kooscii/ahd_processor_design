@@ -11,7 +11,11 @@ entity cpu is
           -- 7-seg
           seg : out std_logic_vector (6 downto 0);
           an : out std_logic_vector (3 downto 0);
-          dp : out std_logic
+          dp : out std_logic;
+          -- inst update
+          prog_addr : in std_logic_vector (31 downto 0);
+          prog_wd : in std_logic_vector (31 downto 0);
+          prog_clk : in std_logic
           );
 end cpu;
 
@@ -19,7 +23,9 @@ architecture Behavioral of cpu is
     
     component ins_mem is
      Port ( inst : out STD_LOGIC_VECTOR (31 downto 0);
-            addr : in STD_LOGIC_VECTOR (31 downto 0));
+            addr : in STD_LOGIC_VECTOR (31 downto 0);
+            wd: in STD_LOGIC_VECTOR (31 downto 0);
+            w_clk: in STD_LOGIC);
     end component;
     
     component ctrl_unit is
@@ -93,6 +99,7 @@ architecture Behavioral of cpu is
     
     -- pc
     signal pc : unsigned (31 downto 0) := TO_UNSIGNED(0, 32);
+    signal pc_run : unsigned (31 downto 0) := TO_UNSIGNED(0, 32);
     signal pc_pl4 : unsigned (31 downto 0);
     signal pc_offset : unsigned (31 downto 0);
     signal pc_addr : unsigned (25 downto 0);
@@ -145,8 +152,8 @@ architecture Behavioral of cpu is
 
 begin
 
-    -- pc
-    pc_pl4 <= pc + 4;
+    -- pc_run
+    pc_pl4 <= pc_run + 4;
     pc_offset <= UNSIGNED(imm_sign_ext(29 downto 0)&"00");
     pc_addr <= UNSIGNED(inst_addr);
     pc_src(0) <= ctrl_jump;
@@ -155,17 +162,17 @@ begin
     PC_SYNC : process(clk, rst)
     begin
         if (rst = '1') then 
-            pc <= TO_UNSIGNED(0, 32);
+            pc_run <= TO_UNSIGNED(0, 32);
         elsif rising_edge(clk) then
             case pc_src is
                 when "00" =>                    -- next inst
-                    pc <= pc_pl4;                              
+                    pc_run <= pc_pl4;                              
                 when "01" =>                    -- jump
-                    pc <= pc_pl4(31 downto 28) & pc_addr & "00";
+                    pc_run <= pc_pl4(31 downto 28) & pc_addr & "00";
                 when "10" =>                    -- branch
-                    pc <= pc_offset + pc_pl4;
+                    pc_run <= pc_offset + pc_pl4;
                 when others =>                  -- halt
-                    pc <= pc;
+                    pc_run <= pc_run;
             end case;
         end if;
     end process;
@@ -180,9 +187,12 @@ begin
     inst_addr <= inst(25 downto 0);
     
     -- inst mem
+    pc <= unsigned(prog_addr) or pc_run;
     U_ins_mem : ins_mem 
        port map ( inst => inst,
-                  addr => std_logic_vector(pc));
+                  addr => std_logic_vector(pc),
+                  wd => prog_wd,
+                  w_clk => prog_clk);
     
     with bnc_type select alu_condi <= alu_eq when "11", not alu_eq when "01", alu_lt when "10", '0' when others;
     U_ctrl_unit : ctrl_unit
