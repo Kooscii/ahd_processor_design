@@ -143,7 +143,7 @@ for no, inst in enumerate(instructions):
             # print(hex(op), addr)
 
 inst_bin = [bin(i)[2:].zfill(32) for i in inst_dec]
-inst_hex = [hex(i)[2:].zfill(8) for i in inst_dec]
+inst_hex = [hex(i)[2:].strip('L').zfill(8) for i in inst_dec]
 
 
 # print the code
@@ -154,7 +154,7 @@ for no, inst in enumerate(instructions):
 print()
 
 for no, _ in enumerate(instructions):
-    print('%03d:'%no, inst_bin[no], inst_hex[no])
+    print('%03d:'%no, inst_bin[no], inst_hex[no], inst_dec[no])
 
 # write into inst_mem
 inst_mem = open('ins_mem.vhd', 'r').readlines()
@@ -167,7 +167,9 @@ with open('ins_mem.vhd', 'w') as f:
     
     for h in inst_hex[:-1]:
         f.write('\t\tx"%s",\n'%h)
+        print('\t\tx"%s",'%h)
     f.write('\t\tx"%s"\n'%inst_hex[-1])
+    print('\t\tx"%s",'%h)
 
     while '<<< end <<<' not in inst_mem[i]:
         i += 1
