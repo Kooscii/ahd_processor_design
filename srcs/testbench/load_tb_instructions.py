@@ -2,10 +2,10 @@
 
 """
 How to use:
-1. Put this script at the same folder as 'ins_mem.vhd'
+1. Put this script at the same folder as 'tb_cpu.vhd'
 2. Insert your asm program after '>>> start >>>'
 3. Run it, and the binary code of your asm program should 
-    be inserted into 'ins_mem.vhd'
+    be inserted into 'tb_cpu.vhd'
 4. Simulate in Vivado/ISE
 
 Notes:
