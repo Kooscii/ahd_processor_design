@@ -58,15 +58,15 @@ begin
     if (rst = '1') then 
         reg(0 to 30) <= (OTHERS => std_logic_vector( TO_UNSIGNED(0, 32)));
     elsif rising_edge(clk) then
-        if we = '1' and TO_INTEGER( unsigned(rd)) < 31 then 
+        if we = '1' and TO_INTEGER( unsigned(rd)) < 31 then -- and TO_INTEGER( unsigned(rd)) > 1 then 
             reg( TO_INTEGER( unsigned(rd))) <= wd;
         end if;
     end if;
     reg(31) <= r31;
     -- r0 always be 0 and read-only
-    -- reg(0) <= STD_LOGIC_VECTOR( TO_UNSIGNED(0, 32));
+--    reg(0) <= STD_LOGIC_VECTOR( TO_UNSIGNED(0, 32));
     -- r1 always be 1 and read-only
-    -- reg(1) <= STD_LOGIC_VECTOR( TO_UNSIGNED(1, 32));
+--    reg(1) <= STD_LOGIC_VECTOR( TO_UNSIGNED(1, 32));
 end process;
 
 rd1 <= reg( TO_INTEGER( unsigned(rs)));

@@ -21,9 +21,12 @@ architecture Behavioral of tb_cpu is
                an : out std_logic_vector (3 downto 0);
                dp : out std_logic;
                -- inst update
-               prog_addr : in std_logic_vector (31 downto 0);
+               prog_addr : in std_logic_vector (9 downto 0);
                prog_wd : in std_logic_vector (31 downto 0);
-               prog_clk : in std_logic
+               prog_clk : in std_logic;
+               -- debug signal
+               debug_0 : out std_logic_vector (31 downto 0);
+               debug_1 : out std_logic_vector (31 downto 0)
                );
     end component;
     
@@ -37,36 +40,39 @@ architecture Behavioral of tb_cpu is
     signal an : std_logic_vector (3 downto 0);
     signal dp : std_logic;
     -- inst update
-    signal prog_addr : std_logic_vector (31 downto 0);
+    signal prog_addr : std_logic_vector (9 downto 0);
     signal prog_wd : std_logic_vector (31 downto 0);
     signal prog_clk : std_logic;
+    -- debug signal
+    signal debug_0 : std_logic_vector (31 downto 0);
+    signal debug_1 : std_logic_vector (31 downto 0);
     
     constant clk_period : time := 10 ns;
     
     type PROG is array(0 to 255) of STD_LOGIC_VECTOR (31 downto 0);
     signal program : PROG := (
 -- >>> start >>>
-		x"04020064",
-		x"00001810",
-		x"28020003",
-		x"00431810",
-		x"00411011",
-		x"30000002",
-		x"0003f010",
-		x"fc000007",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
-		x"ffffffff",
+		x"04010002",
+		x"0403000a",
+		x"0404000e",
+		x"04050002",
+		x"20640002",
+		x"20630001",
+		x"00832011",
+		x"08040001",
+		x"00432012",
+		x"0c44000a",
+		x"00432013",
+		x"1c620001",
+		x"1044000a",
+		x"00432014",
+		x"1444000a",
+		x"1844000a",
+		x"2805fffe",
+		x"24850000",
+		x"2c850000",
+		x"30000014",
+		x"fc000014",
 		x"ffffffff",
 		x"ffffffff",
 		x"ffffffff",
@@ -323,7 +329,9 @@ begin
             -- inst update
             prog_addr => prog_addr,
             prog_wd => prog_wd,
-            prog_clk => prog_clk);
+            prog_clk => prog_clk,
+            debug_0 => debug_0,
+            debug_1 => debug_1);
     
     process
     begin
@@ -346,7 +354,7 @@ begin
             -- programing
             rst <= '1';
             for k in 0 to 255 loop
-                prog_addr <= std_logic_vector( TO_UNSIGNED(k*4, 32));
+                prog_addr <= std_logic_vector( TO_UNSIGNED(k*4, 10));
                 prog_wd <= program(k);
                 
                 wait for clk_period/2;
@@ -357,7 +365,7 @@ begin
             
             -- running
             rst <= '0';
-            prog_addr <= std_logic_vector( TO_UNSIGNED(0, 32));
+            prog_addr <= std_logic_vector( TO_UNSIGNED(0, 10));
             wait;
             
             -- assert here 

@@ -15,7 +15,10 @@ entity cpu is
           -- inst update
           prog_addr : in std_logic_vector (9 downto 0);
           prog_wd : in std_logic_vector (31 downto 0);
-          prog_clk : in std_logic
+          prog_clk : in std_logic;
+          -- debug signal
+          debug_0 : out std_logic_vector (31 downto 0);
+          debug_1 : out std_logic_vector (31 downto 0)
           );
 end cpu;
 
@@ -269,5 +272,9 @@ begin
                    wd => reg_rd2);
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
+    
+    -- debug signal
+    debug_0 <= led_din;
+    debug_1 <= seg_din;
 
 end Behavioral;

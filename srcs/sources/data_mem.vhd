@@ -83,7 +83,7 @@ begin
 ---  to addr(8 downto 2)
 ---2)Fengyang taught me why I need (8 downto 2) but NOT (6 downto 0), I am more 
 ---  clear now but still NOT 100% understand
-sig_addr <= addr(8 downto 2);
+sig_addr <= addr(6 downto 0);
 
    
 	process (clk, rst)
