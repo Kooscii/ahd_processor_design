@@ -13,13 +13,19 @@ entity cpu is
           an : out std_logic_vector (3 downto 0);
           dp : out std_logic;
           -- inst update
-          prog_addr : in std_logic_vector (31 downto 0);
+          prog_addr : in std_logic_vector (9 downto 0);
           prog_wd : in std_logic_vector (31 downto 0);
           prog_clk : in std_logic
           );
 end cpu;
 
 architecture Behavioral of cpu is
+
+    component reset_unit is
+    Port ( clk : in STD_LOGIC;
+           rst_in : in STD_LOGIC;
+           rst_out : out STD_LOGIC);
+    end component;
 
     component pc_unit is
         Port ( clk : in STD_LOGIC;
@@ -108,6 +114,9 @@ architecture Behavioral of cpu is
                clk : in STD_LOGIC);
     end component;
     
+    --
+    signal rst_sync : std_logic;
+    
     -- pc
     signal pc : std_logic_vector (31 downto 0);
     signal pc_run : std_logic_vector (31 downto 0); 
@@ -160,11 +169,17 @@ architecture Behavioral of cpu is
 
 begin
 
+    U_RST : reset_unit
+        Port map ( 
+            clk => clk,
+            rst_in => rst,
+            rst_out => rst_sync);
+
     -- pc_run
    U_PC : pc_unit
         Port map ( 
             clk => clk,
-            rst => rst,
+            rst => rst_sync,
             branch => ctrl_branch,
             condi => alu_condi,
             jump => ctrl_jump,
@@ -182,7 +197,8 @@ begin
     inst_addr <= inst(25 downto 0);
     
     -- inst mem
-    pc <= prog_addr or pc_run;
+    pc(9 downto 0) <= prog_addr or pc_run(9 downto 0);
+    pc(31 downto 10) <= pc_run(31 downto 10);
     U_ins_mem : ins_mem 
        port map ( inst => inst,
                   addr => pc,
@@ -207,7 +223,7 @@ begin
         port map ( rd1 => reg_rd1,
                    rd2 => reg_rd2,
                    clk => clk,
-                   rst => rst,
+                   rst => rst_sync,
                    we => ctrl_regwrt,
                    rs => inst_rs,
                    rt => inst_rt,
@@ -247,7 +263,7 @@ begin
     U_data_mem : data_mem
         port map ( rd => mem_rd,
                    clk => clk,
-                   rst => rst,
+                   rst => rst_sync,
                    we => ctrl_sw,
                    addr => alu_result,
                    wd => reg_rd2);
