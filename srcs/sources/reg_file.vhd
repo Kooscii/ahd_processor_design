@@ -53,7 +53,7 @@ architecture Behavioral of reg_file is
 
 begin
 
-process (clk, rst)
+process (clk, rst, r31)
 begin
     if (rst = '1') then 
         reg(2 to 30) <= (OTHERS => std_logic_vector( TO_UNSIGNED(0, 32)));

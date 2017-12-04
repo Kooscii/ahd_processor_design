@@ -2,10 +2,10 @@
 
 """
 How to use:
-1. Put this script at the same folder as 'ins_mem.vhd'
+1. Put this script at the same folder as 'tb_cpu.vhd'
 2. Insert your asm program after '>>> start >>>'
 3. Run it, and the binary code of your asm program should 
-    be inserted into 'ins_mem.vhd'
+    be inserted into 'tb_cpu.vhd'
 4. Simulate in Vivado/ISE
 
 Notes:
@@ -73,7 +73,7 @@ instructions = []
 labl2addr = {}
 addr2labl = {}
 # reading instructions and mapping label to line no.
-with open('load_instructions.py', 'r') as f:
+with open('load_tb_instructions.py', 'r') as f:
     while True:
         line = f.readline()
         if line == '>>> start >>>\n':
@@ -157,8 +157,8 @@ for no, _ in enumerate(instructions):
     print('%03d:'%no, inst_bin[no], inst_hex[no], inst_dec[no])
 
 # write into inst_mem
-inst_mem = open('ins_mem.vhd', 'r').readlines()
-with open('ins_mem.vhd', 'w') as f:
+inst_mem = open('tb_cpu.vhd', 'r').readlines()
+with open('tb_cpu.vhd', 'w') as f:
     i = 0
     while '>>> start >>>' not in inst_mem[i]:
         f.write(inst_mem[i])

@@ -11,15 +11,38 @@ entity cpu is
           -- 7-seg
           seg : out std_logic_vector (6 downto 0);
           an : out std_logic_vector (3 downto 0);
-          dp : out std_logic
+          dp : out std_logic;
+          -- inst update
+          prog_addr : in std_logic_vector (9 downto 0);
+          prog_wd : in std_logic_vector (31 downto 0);
+          prog_clk : in std_logic
           );
 end cpu;
 
 architecture Behavioral of cpu is
+
+    component reset_unit is
+    Port ( clk : in STD_LOGIC;
+           rst_in : in STD_LOGIC;
+           rst_out : out STD_LOGIC);
+    end component;
+
+    component pc_unit is
+        Port ( clk : in STD_LOGIC;
+               rst : in STD_LOGIC;
+               branch : in STD_LOGIC;
+               condi : in STD_LOGIC;
+               jump : in STD_LOGIC;
+               offset : in STD_LOGIC_VECTOR (31 downto 0);
+               addr : in STD_LOGIC_VECTOR (25 downto 0);
+               pc_next : out STD_LOGIC_VECTOR (31 downto 0));
+    end component;
     
     component ins_mem is
      Port ( inst : out STD_LOGIC_VECTOR (31 downto 0);
-            addr : in STD_LOGIC_VECTOR (31 downto 0));
+            addr : in STD_LOGIC_VECTOR (31 downto 0);
+            wd: in STD_LOGIC_VECTOR (31 downto 0);
+            w_clk: in STD_LOGIC);
     end component;
     
     component ctrl_unit is
@@ -73,11 +96,11 @@ architecture Behavioral of cpu is
                wd : in STD_LOGIC_VECTOR (31 downto 0));
     end component;
     
-    component debounce is
+    component debounce32 is
         Port ( clk : in STD_LOGIC;
                rst : in STD_LOGIC;
-               din : in STD_LOGIC;
-               dout : out STD_LOGIC
+               din : in STD_LOGIC_VECTOR (31 downto 0);
+               dout : out STD_LOGIC_VECTOR (31 downto 0)
              );
     end component;
     
@@ -91,13 +114,12 @@ architecture Behavioral of cpu is
                clk : in STD_LOGIC);
     end component;
     
+    --
+    signal rst_sync : std_logic;
+    
     -- pc
-    signal pc : unsigned (31 downto 0) := TO_UNSIGNED(0, 32);
-    signal pc_pl4 : unsigned (31 downto 0);
-    signal pc_offset : unsigned (31 downto 0);
-    signal pc_addr : unsigned (25 downto 0);
-    signal pc_src : std_logic_vector (1 downto 0);  
-    signal bnc_type : std_logic_vector (1 downto 0);  
+    signal pc : std_logic_vector (31 downto 0);
+    signal pc_run : std_logic_vector (31 downto 0); 
     
     -- instruction
     signal inst : std_logic_vector (31 downto 0);
@@ -113,6 +135,7 @@ architecture Behavioral of cpu is
     signal ctrl_lw : std_logic;
     signal ctrl_sw : std_logic;
     signal ctrl_branch : std_logic;
+    signal ctrl_bnc_type : std_logic_vector (1 downto 0);  
     signal ctrl_jump : std_logic;
     signal ctrl_funct : std_logic_vector (2 downto 0);
     signal ctrl_op2src : std_logic;
@@ -137,6 +160,7 @@ architecture Behavioral of cpu is
     signal mem_rd : std_logic_vector (31 downto 0);  
     
     -- btn & sw debouncing
+    signal r31_raw_btn_sw : std_logic_vector (31 downto 0);
     signal r31_debounced : std_logic_vector (31 downto 0);
     
     -- 7-seg and led display
@@ -145,30 +169,23 @@ architecture Behavioral of cpu is
 
 begin
 
-    -- pc
-    pc_pl4 <= pc + 4;
-    pc_offset <= UNSIGNED(imm_sign_ext(29 downto 0)&"00");
-    pc_addr <= UNSIGNED(inst_addr);
-    pc_src(0) <= ctrl_jump;
-    pc_src(1) <= ctrl_branch and (alu_condi or ctrl_jump);
-    
-    PC_SYNC : process(clk, rst)
-    begin
-        if (rst = '1') then 
-            pc <= TO_UNSIGNED(0, 32);
-        elsif rising_edge(clk) then
-            case pc_src is
-                when "00" =>                    -- next inst
-                    pc <= pc_pl4;                              
-                when "01" =>                    -- jump
-                    pc <= pc_pl4(31 downto 28) & pc_addr & "00";
-                when "10" =>                    -- branch
-                    pc <= pc_offset + pc_pl4;
-                when others =>                  -- halt
-                    pc <= pc;
-            end case;
-        end if;
-    end process;
+    U_RST : reset_unit
+        Port map ( 
+            clk => clk,
+            rst_in => rst,
+            rst_out => rst_sync);
+
+    -- pc_run
+   U_PC : pc_unit
+        Port map ( 
+            clk => clk,
+            rst => rst_sync,
+            branch => ctrl_branch,
+            condi => alu_condi,
+            jump => ctrl_jump,
+            offset => imm_sign_ext,
+            addr => inst_addr,
+            pc_next => pc_run);
     
     -- inst decompose
     inst_opcode <= inst(31 downto 26);
@@ -180,16 +197,20 @@ begin
     inst_addr <= inst(25 downto 0);
     
     -- inst mem
+    pc(9 downto 0) <= prog_addr or pc_run(9 downto 0);
+    pc(31 downto 10) <= pc_run(31 downto 10);
     U_ins_mem : ins_mem 
        port map ( inst => inst,
-                  addr => std_logic_vector(pc));
+                  addr => pc,
+                  wd => prog_wd,
+                  w_clk => prog_clk);
     
-    with bnc_type select alu_condi <= alu_eq when "11", not alu_eq when "01", alu_lt when "10", '0' when others;
+    with ctrl_bnc_type select alu_condi <= alu_eq when "11", not alu_eq when "01", alu_lt when "10", '0' when others;
     U_ctrl_unit : ctrl_unit
         port map ( lw => ctrl_lw,
                    sw => ctrl_sw,
                    branch => ctrl_branch,
-                   bnc_type => bnc_type,
+                   bnc_type => ctrl_bnc_type,
                    jump => ctrl_jump,
                    funct => ctrl_funct,
                    op2src => ctrl_op2src,
@@ -202,7 +223,7 @@ begin
         port map ( rd1 => reg_rd1,
                    rd2 => reg_rd2,
                    clk => clk,
-                   rst => rst,
+                   rst => rst_sync,
                    we => ctrl_regwrt,
                    rs => inst_rs,
                    rt => inst_rt,
@@ -212,28 +233,10 @@ begin
                    r30 => seg_din,
                    r29 => led_din);
                    
-    r31_debounced(31 downto 21) <= (others=>'0');
-    U_debounce20 : debounce port map (clk=>clk, rst=>rst, din=>btn(4), dout=>r31_debounced(20));
-    U_debounce19 : debounce port map (clk=>clk, rst=>rst, din=>btn(3), dout=>r31_debounced(19));
-    U_debounce18 : debounce port map (clk=>clk, rst=>rst, din=>btn(2), dout=>r31_debounced(18));
-    U_debounce17 : debounce port map (clk=>clk, rst=>rst, din=>btn(1), dout=>r31_debounced(17));
-    U_debounce16 : debounce port map (clk=>clk, rst=>rst, din=>btn(0), dout=>r31_debounced(16));
-    U_debounce15 : debounce port map (clk=>clk, rst=>rst, din=>sw(15), dout=>r31_debounced(15));
-    U_debounce14 : debounce port map (clk=>clk, rst=>rst, din=>sw(14), dout=>r31_debounced(14));
-    U_debounce13 : debounce port map (clk=>clk, rst=>rst, din=>sw(13), dout=>r31_debounced(13));
-    U_debounce12 : debounce port map (clk=>clk, rst=>rst, din=>sw(12), dout=>r31_debounced(12));
-    U_debounce11 : debounce port map (clk=>clk, rst=>rst, din=>sw(11), dout=>r31_debounced(11));
-    U_debounce10 : debounce port map (clk=>clk, rst=>rst, din=>sw(10), dout=>r31_debounced(10));
-    U_debounce9 : debounce port map (clk=>clk, rst=>rst, din=>sw(9), dout=>r31_debounced(9));
-    U_debounce8 : debounce port map (clk=>clk, rst=>rst, din=>sw(8), dout=>r31_debounced(8));
-    U_debounce7 : debounce port map (clk=>clk, rst=>rst, din=>sw(7), dout=>r31_debounced(7));
-    U_debounce6 : debounce port map (clk=>clk, rst=>rst, din=>sw(6), dout=>r31_debounced(6));
-    U_debounce5 : debounce port map (clk=>clk, rst=>rst, din=>sw(5), dout=>r31_debounced(5));
-    U_debounce4 : debounce port map (clk=>clk, rst=>rst, din=>sw(4), dout=>r31_debounced(4));
-    U_debounce3 : debounce port map (clk=>clk, rst=>rst, din=>sw(3), dout=>r31_debounced(3));
-    U_debounce2 : debounce port map (clk=>clk, rst=>rst, din=>sw(2), dout=>r31_debounced(2));
-    U_debounce1 : debounce port map (clk=>clk, rst=>rst, din=>sw(1), dout=>r31_debounced(1));
-    U_debounce0 : debounce port map (clk=>clk, rst=>rst, din=>sw(0), dout=>r31_debounced(0));
+    r31_raw_btn_sw (31 downto 21) <= (others=> '0');
+    r31_raw_btn_sw (20 downto 16) <= btn;
+    r31_raw_btn_sw (15 downto 0) <= sw;
+    U_debounce32 : debounce32 port map (clk=>clk, rst=>rst, din=>r31_raw_btn_sw, dout=>r31_debounced);
                   
     U_seg_led : seg_led
         Port map ( seg_din => seg_din,
@@ -260,7 +263,7 @@ begin
     U_data_mem : data_mem
         port map ( rd => mem_rd,
                    clk => clk,
-                   rst => rst,
+                   rst => rst_sync,
                    we => ctrl_sw,
                    addr => alu_result,
                    wd => reg_rd2);

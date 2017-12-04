@@ -34,22 +34,22 @@ use IEEE.NUMERIC_STD.ALL;
 entity ins_mem is
     Port ( inst : out STD_LOGIC_VECTOR (31 downto 0);
            addr : in STD_LOGIC_VECTOR (31 downto 0);
-              wd: in STD_LOGIC_VECTOR (31 downto 0);
-              w_clk: in STD_LOGIC);
+           wd: in STD_LOGIC_VECTOR (31 downto 0);
+           w_clk: in STD_LOGIC);
 end ins_mem;
 
 architecture Behavioral of ins_mem is
     type memory is array(0 to 255) of STD_LOGIC_VECTOR (31 downto 0); --can be changed later
     signal myMem: memory:= (
 -- >>> start >>>
-		x"04020064",
-		x"00001810",
-		x"28020003",
-		x"00431810",
-		x"00411011",
-		x"30000002",
-		x"0003f010",
-		x"fc000007",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
+		x"ffffffff",
 		x"ffffffff",
 		x"ffffffff",
 		x"ffffffff",
@@ -305,9 +305,10 @@ begin
      process(w_clk)
      begin
         if rising_edge(w_clk) then
-        myMem(TO_INTEGER( UNSIGNED(addr(31 downto 2))))<=wd;
+            myMem(TO_INTEGER( UNSIGNED(addr(31 downto 2))))<=wd;
         end if;
      end process;
+     
      inst<=myMem( TO_INTEGER( UNSIGNED( addr(31 downto 2))));
     
 end Behavioral;
