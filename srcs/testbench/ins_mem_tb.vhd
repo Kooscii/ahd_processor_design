@@ -27,6 +27,8 @@
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use ieee.math_real.all;
  
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -48,7 +50,9 @@ ARCHITECTURE behavior OF ins_memTest IS
         );
     END COMPONENT;
     
-
+  type test_stage is (TESTING, FINISHED);
+   signal stage : test_stage := TESTING;
+  
    --Inputs
    signal addr : std_logic_vector(31 downto 0) := (others => '0');
    signal wd : std_logic_vector(31 downto 0) := (others => '0');
@@ -83,35 +87,39 @@ BEGIN
 
    -- Stimulus process
    stim_proc: process
+  variable seed1 : positive; 
+   variable seed2 : positive;
+   variable rand : real;
+   variable rand_range1 : real := 256.0;
+   variable rand_offset1 : integer := 0;
+  variable rand_range2 : real := 4294967296.0;
+   variable rand_offset2 : integer := 0;
+  variable temp : integer :=0;
+  variable randomInstruction : std_logic_vector (31 downto 0);
+  variable randomAddress : std_logic_vector (7 downto 0);
    begin    
+  wait for 100ns;
       -- insert stimulus here 
-    wait for w_clk_period;
-    wd<=X"00000001";
-    addr<=X"00000000";
-    wait for w_clk_period;
-    wd<=X"00000010";
-    addr<=X"00000004";
-    wait for w_clk_period;
-    wd<=X"00000100";
-    addr<=X"00000008";
-    wait for w_clk_period;
-    wd<=X"00001000";
-    addr<=X"0000000C";
-    wait for w_clk_period;
-    wd<=X"00010000";
-    addr<=X"00000010";
-    wait for w_clk_period;
-    wd<=X"00100000";
-    addr<=X"00000014";
-    wait for w_clk_period;
-    wd<=X"01000000";
-    addr<=X"00000018";
-    wait for w_clk_period;
-    wd<=X"10000000";
-    addr<=X"0000001C";
-    wait for w_clk_period;
-
-      wait;
+    -- 1000 random cases
+        for k in 1 to 1000 loop
+            uniform(seed1, seed2, rand);
+        randomAddress:=  std_logic_vector(TO_SIGNED(integer(trunc(rand*rand_range1))+rand_offset1, 8));
+            uniform(seed1, seed2, rand);
+        randomInstruction:=  std_logic_vector(TO_SIGNED(integer(trunc(rand*rand_range2))+rand_offset2, 32));
+            temp:= integer(trunc(rand*rand_range2))+rand_offset2;
+      
+        wd<=randomInstruction;
+        addr(9 downto 2)<=randomAddress;
+        wait for w_clk_period;
+            assert TO_INTEGER(unsigned(inst)) = temp
+                report "Wrong instruction"
+                    severity failure;
+        end loop;
+        
+        stage <= FINISHED;
+        report "1000 cases passed.";
+        
+        wait;
    end process;
 
 END;
