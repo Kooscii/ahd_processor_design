@@ -156,28 +156,28 @@ BEGIN
 		inst <= x"10000000";
 		
 		wait for 10 ns;
-		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="011" and op2src ='1' and regdst = '0' and regwrt='0'
+		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="011" and op2src ='1' and regdst = '0' and regwrt='1'
 			report "Wrong case 9"
 				severity failure;
 				
 		inst <= x"14000000";
 		
 		wait for 10 ns;
-		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="101" and op2src ='1' and regdst = '0' and regwrt='0'
+		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="101" and op2src ='1' and regdst = '0' and regwrt='1'
 			report "Wrong case 10"
 				severity failure;
 				
 		inst <= x"18000000";
 		
 		wait for 10 ns;
-		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="110" and op2src ='1' and regdst = '0' and regwrt='0'
+		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="110" and op2src ='1' and regdst = '0' and regwrt='1'
 			report "Wrong case 11"
 				severity failure;
 				
 		inst <= x"1c000000";
 		
 		wait for 10 ns;
-		assert lw='1' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="000" and op2src ='1' and regdst = '0' and regwrt='0'
+		assert lw='1' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="000" and op2src ='1' and regdst = '0' and regwrt='1'
 			report "Wrong case 12"
 				severity failure;				
 
@@ -219,7 +219,7 @@ BEGIN
 		inst <= x"fc000000";
 		
 		wait for 10 ns;
-		assert lw='0' and sw='0' and branch='0' and bnc_type = "00" and jump='0' and funct="000" and op2src ='0' and regdst = '0' and regwrt='0'
+		assert lw='0' and sw='0' and branch='1' and bnc_type = "00" and jump='1' and funct="000" and op2src ='0' and regdst = '0' and regwrt='0'
 			report "Wrong case 18"
 				severity failure;
 		
