@@ -17,32 +17,32 @@ Notes:
 Instructions
 >>> start >>>
 
-# ADDI R1 R0 7 
-# ADDI R2 R0 8 
-# ADD R3 R1 R2
-# HAL
-
-ADDI R1 R0 2
-ADDI R3 R0 10
-ADDI R4 R0 14
-ADDI R5 R0 2
-SW R4 R3 2
-SW R3 R3 1
-SUB R4 R4 R3
-SUBI R4 R0 1
-AND R4 R2 R3
-ANDI R4 R2 10
-OR R4 R2 R3
-LW R2 R3 1
-ORI R4 R2 10
-NOR R4 R2 R3
-SHL R4 R2 10
-SHR R4 R2 10
-BEQ R5 R0 -2
-BLT R5 R4 0
-BNE R5 R4 0
-JMP 20
+ADDI R1 R0 7 
+ADDI R2 R0 8 
+ADD R3 R1 R2
 HAL
+
+# ADDI R1 R0 2
+# ADDI R3 R0 10
+# ADDI R4 R0 14
+# ADDI R5 R0 2
+# SW R4 R3 2
+# SW R3 R3 1
+# SUB R4 R4 R3
+# SUBI R4 R0 1
+# AND R4 R2 R3
+# ANDI R4 R2 10
+# OR R4 R2 R3
+# LW R2 R3 1
+# ORI R4 R2 10
+# NOR R4 R2 R3
+# SHL R4 R2 10
+# SHR R4 R2 10
+# BEQ R5 R0 -2
+# BLT R5 R4 0
+# BNE R5 R4 0
+# JMP 20
+# HAL
 
 <<< end <<<
 """
@@ -134,6 +134,7 @@ for no, inst in enumerate(instructions):
             try:
                 imm = (int(float(inst[3])) + 2**16) % 2**16
             except:     # might be a branch instruction
+                label = inst[3]
                 addr = labl2addr[label]
                 offset = addr - (no + 1)  
                 imm = (offset + 2**16) % 2**16
