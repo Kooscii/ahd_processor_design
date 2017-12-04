@@ -172,14 +172,14 @@ architecture Behavioral of cpu is
 
 begin
 
-    U_RST : reset_unit
+    U_rst : reset_unit
         Port map ( 
             clk => clk,
             rst_in => rst,
             rst_out => rst_sync);
 
     -- pc_run
-   U_PC : pc_unit
+   U_pc : pc_unit
         Port map ( 
             clk => clk,
             rst => rst_sync,
