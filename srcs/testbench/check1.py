@@ -134,6 +134,7 @@ for no, inst in enumerate(instructions):
             try:
                 imm = (int(float(inst[3])) + 2**16) % 2**16
             except:     # might be a branch instruction
+                label = inst[3]
                 addr = labl2addr[label]
                 offset = addr - (no + 1)  
                 imm = (offset + 2**16) % 2**16
