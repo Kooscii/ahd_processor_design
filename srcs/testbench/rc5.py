@@ -134,6 +134,61 @@ ORI r3 r0 0
 
 BNE r4 r5 KEY_EXP
 
+# INPUT 
+ORI r22 r0 0xffff
+SHR r22 r22 16          # mask
+# A
+ORI r20 r0 0xeedb       # high 16bits
+SHL r20 r20 16
+ORI r21 r0 0xa521       # low 16bits
+AND r21 r21 r22
+OR r15 r20 r21          # r15 <- A
+# ukey[1]
+ORI r20 r0 0x6d8f       # high 16bits
+SHL r20 r20 16
+ORI r21 r0 0x4b15       # low 16bits
+AND r21 r21 r22
+OR r16 r20 r21          # r16 <- B
+
+# ENCRYPT
+SW r8 r0 0              # r8 <- S[0]
+ADD r15 r15 r8          # A = A + S[0]
+SW r8 r0 1              # r8 <- S[1]
+ADD r16 r15 r8          # B = B + S[1]
+# 12 rounds
+ORI r2 r0 1
+ORI r3 r0 13
+ROUND:
+
+OR r14 r15 r16          # r14 <- A or B
+AND r13 r15 r16         # r13 <- A and B
+NOR r13 r13 r0          # r13 <- not (A and B)
+AND r17 r13 r14         # r17 <- A xor B
+
+# rotate
+AND r7 r20 r7       # A+B lower 5 bits
+SUBI r10 r7 32      # lower 5 bits - 32
+OR r9 r0 r8
+
+ORI r11 r0 0
+SL_START:
+BEQ r11 r7 SL_END
+SHL r9 r9 1         # r9 <- rotl higher bits
+ADDI r11 r11 1
+JMP SL_START
+SL_END:
+
+ORI r11 r0 0
+SR_START:
+BEQ r11 r10 SR_END
+SHR r8 r8 1         # r9 <- rotl higher bits
+SUBI r11 r11 1
+JMP SR_START
+SR_END:
+
+ADDI r2 r2 1
+BLT r2 r3 ROUND
+
 
 
 
