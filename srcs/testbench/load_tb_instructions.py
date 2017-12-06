@@ -39,6 +39,8 @@ HAL
 
 from __future__ import print_function
 
+xrange=range
+
 def pack_rtype(op, rs, rt, rd, func):
     return (op<<26) + (rs<<21) + (rt<<16) + (rd<<11) + func
 
