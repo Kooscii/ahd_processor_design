@@ -4,44 +4,122 @@
 # JMP addr
 
 #########################################
-#   ukey input
+#   CONSTANTS
 #########################################
-#   mem_offset : 50
+#   special registers:
+#       r31 <- btn&sw (read-only)
+#       r30 <- 7-segment led display
+#       r29 <- led display
+#       r28 <- btn&sw interupt register
+#       r27 <- 0xffffffff
+#       r26 <- rotate mask 0x001f
+#       r25 <- 16 LSB mask 0xffff
+#       r24 <- btn[4] mask 0x100000
+#       r23 <- btn[3] mask 0x080000
+#       r22 <- btn[2] mask 0x040000  
+#       r21 <- btn[1] mask 0x020000
+#       r20 <- btn[0] mask 0x010000
+#
+ORI r0 r0 0             # r0 <- $zero
+ORI r1 r0 1             # r1 <- $one
+SHL r20 r1 16           # r20 <- 0x00010000
+SHL r21 r20 1           # r21 <- 0x00020000
+SHL r22 r21 1           # r22 <- 0x00040000
+SHL r23 r22 1           # r23 <- 0x00080000
+SHL r24 r23 1           # r24 <- 0x00100000
+ORI r25 r0 0xffff       
+SHR r25 r25 16          # r25 <- 0x0000ffff
+ORI r26 r0 0x001f       # r26 <- 0x0000001f
+ORI r27 r0 0xffff       # r27 <- 0xffffffff
 
-ORI r22 r0 0xffff
-SHR r22 r22 16          # mask
-# ukey[0]
-ORI r20 r0 0x1946       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0x5f91       # low 16bits
-AND r21 r21 r22
-OR r20 r20 r21
-SW r20 r0 50
-# ukey[1]
-ORI r20 r0 0x51b2       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0x41be       # low 16bits
-AND r21 r21 r22
-OR r20 r20 r21
-SW r20 r0 51
-# ukey[2]
-ORI r20 r0 0x01a5       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0x5563       # low 16bits
-AND r21 r21 r22
-OR r20 r20 r21
-SW r20 r0 52
-# ukey[3]
-ORI r20 r0 0x91ce       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0xa910       # low 16bits
-AND r21 r21 r22
-OR r20 r20 r21
-SW r20 r0 53
+#########################################
+#   INPUT
+#########################################
+#   r10, r11 <= temporary registers
+#   ukey memory offset: 50
+#   din memory offset: 54
 
-###########################################
-#   round key generation
-###########################################
+########## FIXED INPUT ##########
+# # ukey
+# ORI r11 r0 0x1946       
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0x5f91         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 50                # MEM[0+50] = ukey[0]
+
+# ORI r11 r0 0x51b2       
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0x41be         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 51                # MEM[1+50] = ukey[1]
+
+# ORI r11 r0 0x01a5       
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0x5563         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 52                # MEM[2+50] = ukey[2]
+
+# ORI r11 r0 0x91ce       
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0xa910         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 53                # MEM[3+50] = ukey[3]
+
+# # din
+# # A
+# ORI r11 r0 0xeedb           
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0xa521         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 54
+# # B
+# ORI r11 r0 0x6d8f           
+# SHL r11 r11 16              # r11 <- 16 MSB
+# ANDI r10 r25 0x4b15         # r10 <- 16 LSB
+# OR r10 r11 r10              # r10 <- 16 MSB + 16 LSB
+# SW r10 r0 55
+
+
+###### Input from switches #####
+#   r28 <- interupt register
+#   r2 <- i
+#   r3 <- 4 (upper limit of the loop)
+#
+#   for(r2=0; r2!=r3; r2++) {
+#       wait for btn[0];
+#       r10 = switches;
+#       wait for btn[0];
+#       r11 = switches;
+#       MEM[r2+50] = (r11<<16) + r10;
+#   }
+
+# ukey
+ORI r2 r0 0                         # i = 0
+ORI r3 r0 4
+UKEY_INPUT:
+AND r28 r20 r31                 # wait btn[0] release
+BEQ r28 r20 -2
+AND r28 r20 r31                 # wait btn[0] press
+BNE r28 r20 -2
+ANDI r10 r25 r31                # 16 LSB
+
+AND r28 r20 r31                 # wait btn[0] release
+BEQ r28 r20 -2
+AND r28 r20 r31                 # wait btn[0] press
+BNE r28 r20 -2
+ORI r11 r0 r31                  # 16 MSB
+SHL r11 r11 16
+
+OR r10 r11 r10                  # r10 <- 16 MSB + 16 LSB
+SW r10 r2 50                    # MEM[2+50] = ukey[2]
+
+ADDI r2 r2 1                    # i += 1
+BNE r2 r3 UKEY_INPUT            # loop until r2 = 5
+
+
+#########################################
+#   UKEY EXPANSION
+#########################################
 #   K mem_offset 50, S mem_offset 0, L mem_offset 26
 
 # initialize L and S
@@ -125,32 +203,14 @@ ORI r3 r0 0
 
 BNE r4 r5 KEY_EXP
 
-##########################################
-#   DIN 
-########################################## 
-#   Ain mem_offset 40, Bin men_offset 41
 
-ORI r22 r0 0xffff
-SHR r22 r22 16          # mask
-# A
-ORI r20 r0 0xeedb       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0xa521       # low 16bits
-AND r21 r21 r22
-OR r15 r20 r21          # r15 <- A
-SW r15 r0 40
-# ukey[1]
-ORI r20 r0 0x6d8f       # high 16bits
-SHL r20 r20 16
-ORI r21 r0 0x4b15       # low 16bits
-AND r21 r21 r22
-OR r16 r20 r21          # r16 <- B
-SW r16 r0 41
 
 ##########################################
 #   ENCRYPT
 ##########################################
 # 
+LW r15 r0 40
+LW r16 r0 41
 
 ORI r20 r0 0x001f       # rot mask
 LW r8 r0 0              # r8 <- S[0]
