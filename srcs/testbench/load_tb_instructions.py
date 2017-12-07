@@ -1,42 +1,4 @@
 #!/usr/bin/env python
-
-"""
-How to use:
-1. Put this script at the same folder as 'tb_cpu.vhd'
-2. Insert your asm program after '>>> start >>>'
-3. Run it, and the binary code of your asm program should 
-    be inserted into 'tb_cpu.vhd'
-4. Simulate in Vivado/ISE
-
-Notes:
-1. Comment start with #
-2. LABEL must be in a separate line, letter only and ended with ':'
-3. DO NOT modified line '>>> start >>>' and '<<< end <<<'
-
-Instructions
->>> start >>>
-
-# This is an example code calculating 
-# the summation from 1 to 100
-
-# Delete all the lines between 'start' and 'end' 
-# before you program
-
-ADDI r0 r2 100      # initialize r2 to 100
-ADD r0 r0 r3        # store the summation in r3
-START:
-BEQ r0 r2 END       # jump to END if r2 counts down to zero
-ADD r2 r3 r3        # r3 = r3 + r2
-SUB r2 r1 r2        # r2 = r2 - 1
-JMP START           # lopp
-
-END:
-ADD r0 r3 r30       # r30 is the 7-seg display register
-HAL
-
-<<< end <<<
-"""
-
 from __future__ import print_function
 
 xrange=range
@@ -75,36 +37,31 @@ instructions = []
 labl2addr = {}
 addr2labl = {}
 # reading instructions and mapping label to line no.
-with open('load_tb_instructions.py', 'r') as f:
-    while True:
-        line = f.readline()
-        if line == '>>> start >>>\n':
-            break
+# asm_code = open('asm_code/code1.asm', 'r').readlines()
+# asm_code = open('asm_code/code2.asm', 'r').readlines()
+asm_code = open('asm_code/rc5.asm', 'r').readlines()
 
-    idx = 0
-    while True:
-        line = f.readline().strip()
-        # if not the end of the code
-        if line != '<<< end <<<':
-            # trim comment
-            inst = line.split('#')[0].strip().split()
-            # if not blank line
-            if inst and inst[0][-1] == ':':
-                label = inst[0][:-1].strip()
-                # mapping address to label
-                if label in labl2addr:
-                    raise 'Duplicated LABEL'
-                labl2addr[label] = idx
-                # mapping label to address
-                if idx in addr2labl:
-                    addr2labl[idx].append(label+':')
-                else:
-                    addr2labl[idx] = [label+':']
-            elif inst:
-                instructions.append(inst)
-                idx += 1
+idx = 0
+for line in asm_code:
+    # trim comment
+    inst = line.split('#')[0].strip().split()
+    # if not blank line
+    if inst and inst[0][-1] == ':':
+        label = inst[0][:-1].strip()
+        # mapping address to label
+        if label in labl2addr:
+            raise 'Duplicated LABEL'
+        labl2addr[label] = idx
+        # mapping label to address
+        if idx in addr2labl:
+            addr2labl[idx].append(label+':')
         else:
-            break
+            addr2labl[idx] = [label+':']
+    elif inst:
+        instructions.append(inst)
+        idx += 1
+
+print(labl2addr)
 
 # compiling
 inst_dec = [2**32-1 for _ in xrange(256)]
@@ -124,7 +81,10 @@ for no, inst in enumerate(instructions):
             rs = int(inst[1][1:])
             rt = int(inst[2][1:])
             try:
-                imm = (int(float(inst[3])) + 2**16) % 2**16
+                if inst[3][0:2] == '0x':
+                    imm = int(inst[3], 16)
+                else:
+                    imm = (int(float(inst[3])) + 2**16) % 2**16
             except:     # might be a branch instruction
                 label = inst[3]
                 addr = labl2addr[label]
