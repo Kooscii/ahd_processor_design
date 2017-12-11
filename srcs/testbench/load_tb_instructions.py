@@ -129,7 +129,7 @@ print()
 
 with open('asm_code/rc5_optimized.binary', 'w') as f:
     for no, _ in enumerate(instructions):
-        print(inst_bin[no])
+        print(no, ':', inst_bin[no])
         f.write(inst_bin[no]+'\n')
 
 with open('asm_code/rc5_optimized.hex', 'w') as f:

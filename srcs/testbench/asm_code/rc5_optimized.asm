@@ -44,29 +44,32 @@ ORI r27 r0 0xffff       # r27 <- 0xffffffff
 
 MAIN:
 SHR r28 r31 16
-BNE r28 r0 MAIN                 # wait for all buttons are released
+BNE r28 r0 MAIN                  # wait for all buttons are released
 
+MAIN_LOOP:
 # if btn[3] is pressed
 AND r28 r23 r31
 BNE r28 r23 1
-# JMP UKEY_INPUT                 # goto UKEY_INPUT subprogram
-JMP FIXED_UKEY_INPUT
+JMP UKEY_INPUT                 # goto UKEY_INPUT subprogram
+# JMP FIXED_UKEY_INPUT
 
 # if btn[2] is pressed
 AND r28 r22 r31
 BNE r28 r22 1
-# JMP DIN_INPUT                  # goto DIN_INPUT subprogram
-JMP FIXED_DIN_INPUT
+JMP DIN_INPUT                  # goto DIN_INPUT subprogram
+# JMP FIXED_DIN_INPUT
 
 # if btn[1] is pressed
 AND r28 r21 r31
 BNE r28 r21 1
-JMP MAIN                   # goto ENCRYPTO subprogram
+JMP ENCRYPTION                 # goto ENCRYPTO subprogram
 
 # if btn[0] is pressed
 AND r28 r20 r31
 BNE r28 r20 1
-JMP MAIN                   # goto DECRYPTO subprogram
+JMP DECRYPTION                 # goto DECRYPTO subprogram
+
+JMP MAIN_LOOP                        
 
 #########################################
 #   INPUT
@@ -139,27 +142,27 @@ JMP MAIN                       # return to main
 #   Subprogram: UKEY_INPUT
 #############################################
 UKEY_INPUT:
-ORI r3 r0 0                         # i = 0
+ORI r3 r0 3                         # i = 0
 ORI r4 r0 4
 LOOP_UKEY_INPUT:
-AND r28 r20 r31                 # wait btn[0] release
-BEQ r28 r20 -2
-AND r28 r20 r31                 # wait btn[0] press
-BNE r28 r20 -2
+AND r28 r23 r31                 # wait btn[0] release
+BEQ r28 r23 -2
+AND r28 r23 r31                 # wait btn[0] press
+BNE r28 r23 -2
 OR r11 r0 r31                   # 16 MSB
 SHL r11 r11 16
 
-AND r28 r20 r31                 # wait btn[0] release
-BEQ r28 r20 -2
-AND r28 r20 r31                 # wait btn[0] press
-BNE r28 r20 -2
+AND r28 r23 r31                 # wait btn[0] release
+BEQ r28 r23 -2
+AND r28 r23 r31                 # wait btn[0] press
+BNE r28 r23 -2
 AND r10 r25 r31                 # 16 LSB
 
 OR r10 r11 r10                  # r10 <- 16 MSB + 16 LSB
-SW r10 r2 50                    # MEM[2+50] = ukey[2]
+SW r10 r3 50                    # MEM[2+50] = ukey[2]
 
-ADDI r3 r3 1                    # i += 1
-BNE r3 r4 LOOP_UKEY_INPUT       # loop until r3 = 4
+SUBI r3 r3 1                    # i -= 1
+BNE r3 r2 LOOP_UKEY_INPUT       # loop until r3 = -1
 
 JMP KEY_EXP                    # goto KEY_EXP
 
@@ -170,21 +173,21 @@ DIN_INPUT:
 ORI r3 r0 0                         # i = 0
 ORI r4 r0 2
 LOOP_DIN_INPUT:
-AND r28 r20 r31                 # wait btn[0] release
-BEQ r28 r20 -2
-AND r28 r20 r31                 # wait btn[0] press
-BNE r28 r20 -2
+AND r28 r22 r31                 # wait btn[0] release
+BEQ r28 r22 -2
+AND r28 r22 r31                 # wait btn[0] press
+BNE r28 r22 -2
 OR r11 r0 r31                   # 16 MSB
 SHL r11 r11 16
 
-AND r28 r20 r31                 # wait btn[0] release
-BEQ r28 r20 -2
-AND r28 r20 r31                 # wait btn[0] press
-BNE r28 r20 -2
+AND r28 r22 r31                 # wait btn[0] release
+BEQ r28 r22 -2
+AND r28 r22 r31                 # wait btn[0] press
+BNE r28 r22 -2
 AND r10 r25 r31                 # 16 LSB
 
 OR r10 r11 r10                  # r10 <- 16 MSB + 16 LSB
-SW r10 r2 54                    # MEM[2+50] = ukey[2]
+SW r10 r3 54                    # MEM[2+50] = ukey[2]
 
 ADDI r3 r3 1                    # i += 1
 BNE r3 r4 LOOP_DIN_INPUT        # loop until r3 = 2
@@ -220,7 +223,7 @@ OR r9 r11 r10                   # r9 <- Q = 16 MSB + 16 LSB
 
 # initialize S
 ORI r7 r8 0                     # r7 <- S[i]; S[0] = P
-SW r3 r2 0                      # MEM[0] <- S[0]
+SW r7 r0 0                      # MEM[0] <- S[0]
 ORI r3 r0 1                     # i = 1
 ORI r4 r0 26                    # loop upper bound
 INIT_S:
@@ -236,14 +239,15 @@ ORI r5 r0 0                     # k
 ORI r13 r0 26                   # i upper bound
 ORI r14 r0 4                    # j upper bound
 ORI r15 r0 78                   # k upper bound
-ORI r8 r0 26                    # A
-ORI r9 r0 4                     # B
+ORI r8 r0 0                     # A
+ORI r9 r0 0                     # B
 
 LOOP_SKEY:
 # calculate A
 ADD r8 r8 r9                    # r8 <- A = A+B
 LW r7 r3 0                      # r7 <- S[i]
 ADD r7 r7 r8                    # r7 <- S[i] = S[i] + A + B
+# rotate left
 SHL r11 r7 3                    # r11 <- r7 << 3 (29 MSB)
 SHR r10 r7 29                   # r10 <- r7 >> 29 (3 LSB)
 OR r8 r11 r10                   # r8 <- A = rotl(S[i] + A + B, 3)
@@ -252,25 +256,21 @@ SW r8 r3 0                      # S[i] = A
 ADD r9 r8 r9                    # r9 <- B = A+B
 LW r7 r4 26                     # r7 <- L[j]
 ADD r7 r7 r9                    # r7 <- L[j] = L[j] + A + B
-
+# rotate left
 ORI r6 r0 0                     # rotation counter
 AND r16 r26 r9                  # A + B: 5 LSB rotation bits
 OR r11 r0 r7
-JMP LOOP_SHTL_0
-START_SHTL_0:
+BEQ r0 r0 2
 SHL r11 r11 1                   # r11 <- r11 << 1
 ADDI r6 r6 1                    # r6 += 1
-LOOP_SHTL_0:
-BLT r16 r6 START_SHTL_0         # loop if r6 < rotation bits
+BLT r16 r6 -3                   # loop if r6 < rotation bits
 
 ORI r16 r0 32                   # total rotation bits = 32
 OR r10 r0 r7
-JMP LOOP_SHTR_0
-START_SHTR_0:
+BEQ r0 r0 2
 SHR r10 r10 1                   # r10 <- r10 >> 1
 ADDI r6 r6 1                    # r6 += 1
-LOOP_SHTR_0:
-BLT r16 r6 START_SHTR_0         # loop if r6 < 32
+BLT r16 r6 -3                   # loop if r6 < 32
 
 OR r9 r11 r10                   # r9 <- B = rotl(L[j] + A + B, A+B)
 SW r9 r4 26                     # L[j] = B
@@ -289,193 +289,186 @@ JMP MAIN                        # return to main
 
 
 ##########################################
-#   ENCRYPT
+#   ENCRYPTION
 ##########################################
 # 
-LW r15 r0 40
-LW r16 r0 41
-
-ORI r20 r0 0x001f       # rot mask
-LW r8 r0 0              # r8 <- S[0]
-ADD r15 r15 r8          # A = A + S[0]
-LW r8 r0 1              # r8 <- S[1]
-ADD r16 r16 r8          # B = B + S[1]
+ENCRYPTION:
+LW r8 r0 54                     # r8 <- A
+LW r9 r0 55                     # r9 <- B
+LW r7 r0 0                      # r7 <- S[0]
+ADD r8 r8 r7                    # r8 <- A = A + S[0]
+LW r7 r0 1                      # r7 <- S[1]
+ADD r9 r9 r7                    # r9 <- B = B + S[1]
 
 # 12 rounds
-ORI r2 r0 1             # i
-ORI r3 r0 13
-EN_ROUND:
-SHL r4 r2 1             # r4 <- 2*i
-ADDI r5 r4 1            # r5 <- 2*i+1
+ORI r3 r0 1                     # i
+ORI r13 r0 13                   # upper bound
+LOOP_ENC:
+SHL r4 r3 1                     # r4 <- 2*i
+ADDI r5 r4 1                    # r5 <- 2*i+1
 
 # calculate A
 # XOR operation
-AND r14 r15 r16         # AB
-NOR r14 r14 r0          # r14 <- ~AB
-ORI r13 r14 0           # r13 <- ~AB
-AND r14 r14 r16         # r14 <- B(~AB)
-NOR r14 r14 r0          # r14 <- ~(B(~AB))
-AND r13 r13 r15         # r13 <- A(~AB)
-NOR r13 r13 r0          # r13 <- ~(A(~AB))
-AND r8 r13 r14          # r8 <- (~(B(~AB)))(~(A(~AB)))
-NOR r8 r8 r0            # r8 <- ~((~(B(~AB)))(~(A(~AB)))) = A xor B
-# rotate
-AND r7 r20 r16          # B lower 5 bits
-SUBI r10 r7 32          # B lower 5 bits - 32
-OR r9 r0 r8
-ORI r11 r0 0
-ENA_SL_START:
-BEQ r11 r7 ENA_SL_END
-SHL r9 r9 1             # r9 <- rotl higher bits
-ADDI r11 r11 1
-JMP ENA_SL_START
-ENA_SL_END:
-ORI r11 r0 0
-ENA_SR_START:
-BEQ r11 r10 ENA_SR_END
-SHR r8 r8 1             # r8 <- rotl lower bits
-SUBI r11 r11 1
-JMP ENA_SR_START
-ENA_SR_END:
-OR r9 r9 r8             # r9 <- ROTL(A^B, B)
-LW r8 r4 0              # r8 <- S[i*2]
-ADD r15 r8 r9           # A = S[i*2] + ROTL(A^B, B)
+AND r11 r8 r9                   # r11 <- A and B
+NOR r11 r11 r0                  # r11 <- A nand B
+ORI r10 r11 0                   # r10 <- A nand B
+AND r11 r11 r9                  # r11 <- B and (A nand B)
+NOR r11 r11 r0                  # r11 <- B nand (A nand B))
+AND r10 r10 r8                  # r10 <- A and (A nand B)
+NOR r10 r10 r0                  # r10 <- A nand (A nand B))
+AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
+NOR r10 r10 r0                  # r10 <- (B nand (A nand B))) nand (A nand (A nand B)))
+OR r11 r10 r10                  # r11 <- r10
+
+ORI r6 r0 0                     # rotation counter
+AND r16 r26 r9                  # B: 5 LSB rotation bits
+BEQ r0 r0 2
+SHL r11 r11 1                   # r11 <- r11 << 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < rotation bits
+
+ORI r16 r0 32                   # total rotation bits = 32
+BEQ r0 r0 2
+SHR r10 r10 1                   # r10 <- r10 >> 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < 32
+
+OR r10 r11 r10                  # r10 <- rotl(A^B, B)
+LW r7 r4 0                      # r7 <- S[i*2]
+ADD r8 r10 r7                   # r8 <- A = ROTL(A^B, B) + S[i*2]
 
 # calculate B
 # XOR operation
-AND r14 r15 r16         # AB
-NOR r14 r14 r0          # r14 <- ~AB
-ORI r13 r14 0           # r13 <- ~AB
-AND r14 r14 r16         # r14 <- B(~AB)
-NOR r14 r14 r0          # r14 <- ~(B(~AB))
-AND r13 r13 r15         # r13 <- A(~AB)
-NOR r13 r13 r0          # r13 <- ~(A(~AB))
-AND r8 r13 r14          # r8 <- (~(B(~AB)))(~(A(~AB)))
-NOR r8 r8 r0            # r8 <- ~((~(B(~AB)))(~(A(~AB)))) = A xor B
-# rotate
-AND r7 r20 r15          # A lower 5 bits
-SUBI r10 r7 32          # A lower 5 bits - 32
-OR r9 r0 r8
-ORI r11 r0 0
-ENB_SL_START:
-BEQ r11 r7 ENB_SL_END
-SHL r9 r9 1             # r9 <- rotl higher bits
-ADDI r11 r11 1
-JMP ENB_SL_START
-ENB_SL_END:
-ORI r11 r0 0
-ENB_SR_START:
-BEQ r11 r10 ENB_SR_END
-SHR r8 r8 1             # r8 <- rotl lower bits
-SUBI r11 r11 1
-JMP ENB_SR_START
-ENB_SR_END:
-OR r9 r9 r8             # r9 <- ROTL(A^B, A)
-LW r8 r5 0              # r8 <- S[i*2+1]
-ADD r16 r8 r9           # B = S[i*2+1] + ROTL(A^B, B)
+AND r11 r8 r9                   # r11 <- A and B
+NOR r11 r11 r0                  # r11 <- A nand B
+ORI r10 r11 0                   # r10 <- A nand B
+AND r11 r11 r9                  # r11 <- B and (A nand B)
+NOR r11 r11 r0                  # r11 <- B nand (A nand B))
+AND r10 r10 r8                  # r10 <- A and (A nand B)
+NOR r10 r10 r0                  # r10 <- A nand (A nand B))
+AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
+NOR r10 r10 r0                  # r10 <- (B nand (A nand B))) nand (A nand (A nand B)))
+OR r11 r10 r10                  # r11 <- r10
+
+ORI r6 r0 0                     # rotation counter
+AND r16 r26 r8                  # A: 5 LSB rotation bits
+BEQ r0 r0 2
+SHL r11 r11 1                   # r11 <- r11 << 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < rotation bits
+
+ORI r16 r0 32                   # total rotation bits = 32
+BEQ r0 r0 2
+SHR r10 r10 1                   # r10 <- r10 >> 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < 32
+
+OR r10 r11 r10                  # r10 <- rotl(A^B, A)
+LW r7 r5 0                      # r7 <- S[i*2+1]
+ADD r9 r10 r7                   # r9 <- B = ROTL(A^B, A) + S[i*2+1]
 
 # increment and loop
-ADDI r2 r2 1
-BLT r3 r2 EN_ROUND
+ADDI r3 r3 1
+BNE r3 r13 LOOP_ENC             # loop until i = 13
 
-# A_enc, B_enc offset 42, 43
-SW r15 r0 42
-SW r16 r0 43
+# Store enc(A) enc(B)
+SW r8 r0 30
+SW r9 r0 31
+
+JMP MAIN
+
 
 ##########################################
-#   DECRYPTO
+#   DECRYPTION
 ##########################################
 #
-
+DECRYPTION:
 # LOAD A_enc, B_enc
-LW r15 r0 42
-LW r16 r0 43
+LW r8 r0 54
+LW r9 r0 55
 
-ORI r20 r0 0x001f       # rot mask
 # 12 rounds
-ORI r2 r0 12            # i
-DE_ROUND:
-SHL r4 r2 1             # r4 <- 2*i
-ADDI r5 r4 1            # r5 <- 2*i+1
+ORI r3 r0 12                    # i
+LOOP_DEC:
+SHL r4 r3 1                     # r4 <- 2*i
+ADDI r5 r4 1                    # r5 <- 2*i+1
 
 # calculate B
-LW r8 r5 0              # r8 <- S[2*i+1]
-SUB r8 r16 r8           # r8 <- B - S[2*i+1]
-# rotate
-AND r7 r20 r15          # A lower 5 bits
-SUBI r10 r7 32          # A lower 5 bits - 32
-OR r9 r0 r8
-ORI r11 r0 0
-DEB_SR_START:
-BEQ r11 r7 DEB_SR_END
-SHR r9 r9 1             # r9 <- rotl lower bits
-ADDI r11 r11 1
-JMP DEB_SR_START
-DEB_SR_END:
-ORI r11 r0 0
-DEB_SL_START:
-BEQ r11 r10 DEB_SL_END
-SHL r8 r8 1             # r8 <- rotl higher bits
-SUBI r11 r11 1
-JMP DEB_SL_START
-DEB_SL_END:
-OR r16 r8 r9            # r16 <- ROTR A
-# XOR
-AND r14 r15 r16         # AB
-NOR r14 r14 r0          # r14 <- ~AB
-ORI r13 r14 0           # r13 <- ~AB
-AND r14 r14 r16         # r14 <- B(~AB)
-NOR r14 r14 r0          # r14 <- ~(B(~AB))
-AND r13 r13 r15         # r13 <- A(~AB)
-NOR r13 r13 r0          # r13 <- ~(A(~AB))
-AND r8 r13 r14          # r8 <- (~(B(~AB)))(~(A(~AB)))
-NOR r16 r8 r0           # B = r16 <- ~((~(B(~AB)))(~(A(~AB)))) = A xor B
+LW r7 r5 0                      # r7 <- S[i*2+1]
+SUB r10 r9 r7                   # r10 <- B - S[i*2+1]
+OR r11 r10 r10                  # r11 <- r10
+
+ORI r6 r0 0                     # rotation counter
+AND r16 r26 r8                  # A: 5 LSB rotation bits
+BEQ r0 r0 2
+SHR r10 r10 1                   # r10 <- r10 >> 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < rotation bits
+
+ORI r16 r0 32                   # total rotation bits = 32
+BEQ r0 r0 2
+SHL r11 r11 1                   # r11 <- r11 << 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < 32
+
+OR r9 r11 r10                   # r9 <- rotr(B - S[i*2+1], A)
+
+# xor
+AND r11 r8 r9                   # r11 <- A and B
+NOR r11 r11 r0                  # r11 <- A nand B
+ORI r10 r11 0                   # r10 <- A nand B
+AND r11 r11 r9                  # r11 <- B and (A nand B)
+NOR r11 r11 r0                  # r11 <- B nand (A nand B))
+AND r10 r10 r8                  # r10 <- A and (A nand B)
+NOR r10 r10 r0                  # r10 <- A nand (A nand B))
+AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
+NOR r9 r10 r0                   # r9 <- B = (B nand (A nand B))) nand (A nand (A nand B)))
 
 # calculate A
-LW r8 r4 0              # r8 <- S[2*i]
-SUB r8 r15 r8           # r8 <- A - S[2*i]
-# rotate
-AND r7 r20 r16          # B lower 5 bits
-SUBI r10 r7 32          # B lower 5 bits - 32
-OR r9 r0 r8
-ORI r11 r0 0
-DEA_SR_START:
-BEQ r11 r7 DEA_SR_END
-SHR r9 r9 1             # r9 <- rotl lower bits
-ADDI r11 r11 1
-JMP DEA_SR_START
-DEA_SR_END:
-ORI r11 r0 0
-DEA_SL_START:
-BEQ r11 r10 DEA_SL_END
-SHL r8 r8 1             # r8 <- rotl higher bits
-SUBI r11 r11 1
-JMP DEA_SL_START
-DEA_SL_END:
-OR r15 r8 r9            # r16 <- ROTR B
-# XOR
-AND r14 r15 r16         # AB
-NOR r14 r14 r0          # r14 <- ~AB
-ORI r13 r14 0           # r13 <- ~AB
-AND r14 r14 r16         # r14 <- B(~AB)
-NOR r14 r14 r0          # r14 <- ~(B(~AB))
-AND r13 r13 r15         # r13 <- A(~AB)
-NOR r13 r13 r0          # r13 <- ~(A(~AB))
-AND r8 r13 r14          # r8 <- (~(B(~AB)))(~(A(~AB)))
-NOR r15 r8 r0           # A = r8 <- ~((~(B(~AB)))(~(A(~AB)))) = A xor B
+LW r7 r4 0                      # r7 <- S[i*2]
+SUB r10 r8 r7                   # r10 <- A - S[i*2]
+OR r11 r10 r10                  # r11 <- r10
+
+ORI r6 r0 0                     # rotation counter
+AND r16 r26 r9                  # B: 5 LSB rotation bits
+BEQ r0 r0 2
+SHR r10 r10 1                   # r10 <- r10 >> 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < rotation bits
+
+ORI r16 r0 32                   # total rotation bits = 32
+BEQ r0 r0 2
+SHL r11 r11 1                   # r11 <- r11 << 1
+ADDI r6 r6 1                    # r6 += 1
+BLT r16 r6 -3                   # loop if r6 < 32
+
+OR r8 r11 r10                   # r9 <- rotr(B - S[i*2+1], A)
+
+# xor
+AND r11 r8 r9                   # r11 <- A and B
+NOR r11 r11 r0                  # r11 <- A nand B
+ORI r10 r11 0                   # r10 <- A nand B
+AND r11 r11 r9                  # r11 <- B and (A nand B)
+NOR r11 r11 r0                  # r11 <- B nand (A nand B))
+AND r10 r10 r8                  # r10 <- A and (A nand B)
+NOR r10 r10 r0                  # r10 <- A nand (A nand B))
+AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
+NOR r8 r10 r0                   # r9 <- B = (B nand (A nand B))) nand (A nand (A nand B)))
 
 # decrement and loop
-SUBI r2 r2 1
-BNE r2 r0 DE_ROUND
+SUBI r3 r3 1
+BNE r3 r0 LOOP_DEC              # loop until i = 0
 
-LW r8 r0 1              # r8 <- S[1]
-SUB r16 r16 r8          # B = B - S[1]
-LW r8 r0 0              # r8 <- S[0]
-SUB r15 r15 r8          # A = A - S[0]
+LW r7 r0 1                      # r7 <- S[1]
+SUB r9 r9 r7                    # r9 <- B = B - S[1]
+LW r7 r0 0                      # r7 <- S[0]
+SUB r8 r8 r7                  # r8 <- A = A - S[0]
 
 # A_dec, B_dec offset 44, 45
-SW r15 r0 44
-SW r16 r0 45
+SW r8 r0 32
+SW r9 r0 33
+
+JMP MAIN
 
 HAL
 

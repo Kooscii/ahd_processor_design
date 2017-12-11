@@ -39,11 +39,9 @@ entity debounce is
 end debounce;
 
 architecture Behavioral of debounce is
-    type type_state is (IDLE, DELAY);
+    type type_state is (IDLE, PRESSED, RELEASED);
     signal state : type_state := IDLE;
-    
-    signal stable_din : std_logic := '0';
-    
+        
 begin
     
     process (clk, rst)
@@ -53,26 +51,34 @@ begin
         if rst = '1' then
             t := 0;
             state <= IDLE;
-            stable_din <= din;
+            dout <= din;
         elsif rising_edge(clk) then
             case state is
                 when IDLE =>
-                    if din /= stable_din then
+                    dout <= din;
+                    if din = '1' then
                         t := 0;
-                        state <= DELAY;
+                        state <= PRESSED;
                     end if;
-                when others =>
+                when PRESSED =>     -- down-sampling
                     t := t + 1;
-                    if t > 5000000 then
+                    if t > 10 then
+                        if din = '0' then
+                            state <= RELEASED;
+                        end if;
                         t := 0;
-                        stable_din <= din;
-                        state <= IDLE;
-                    end if;    
+                    end if;  
+                when RELEASED =>     -- down-sampling
+                    t := t + 1;
+                    if t > 10 then
+                        if din = '0' then
+                            state <= IDLE;
+                        end if;
+                        t := 0;
+                    end if;      
             end case;
         end if;
     
     end process;
     
-    dout <= stable_din;
-
 end Behavioral;

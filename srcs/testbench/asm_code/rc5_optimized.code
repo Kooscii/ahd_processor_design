@@ -13,308 +13,288 @@
 MAIN:
 012:  SHR  r28 r31 16
 013:  BNE  r28 r0  MAIN
+MAIN_LOOP:
 014:  AND  r28 r23 r31
 015:  BNE  r28 r23 1
-016:  JMP  FIXED_UKEY_INPUT
+016:  JMP  UKEY_INPUT
 017:  AND  r28 r22 r31
 018:  BNE  r28 r22 1
-019:  JMP  FIXED_DIN_INPUT
+019:  JMP  DIN_INPUT
 020:  AND  r28 r21 r31
 021:  BNE  r28 r21 1
-022:  JMP  MAIN
+022:  JMP  ENCRYPTION
 023:  AND  r28 r20 r31
 024:  BNE  r28 r20 1
-025:  JMP  MAIN
+025:  JMP  DECRYPTION
+026:  JMP  MAIN_LOOP
 FIXED_UKEY_INPUT:
-026:  ORI  r11 r0  0x1946
-027:  SHL  r11 r11 16
-028:  ANDI r10 r25 0x5f91
-029:  OR   r10 r11 r10
-030:  SW   r10 r0  50
-031:  ORI  r11 r0  0x51b2
-032:  SHL  r11 r11 16
-033:  ANDI r10 r25 0x41be
-034:  OR   r10 r11 r10
-035:  SW   r10 r0  51
-036:  ORI  r11 r0  0x01a5
-037:  SHL  r11 r11 16
-038:  ANDI r10 r25 0x5563
-039:  OR   r10 r11 r10
-040:  SW   r10 r0  52
-041:  ORI  r11 r0  0x91ce
-042:  SHL  r11 r11 16
-043:  ANDI r10 r25 0xa910
-044:  OR   r10 r11 r10
-045:  SW   r10 r0  53
-046:  JMP  KEY_EXP
+027:  ORI  r11 r0  0x1946
+028:  SHL  r11 r11 16
+029:  ANDI r10 r25 0x5f91
+030:  OR   r10 r11 r10
+031:  SW   r10 r0  50
+032:  ORI  r11 r0  0x51b2
+033:  SHL  r11 r11 16
+034:  ANDI r10 r25 0x41be
+035:  OR   r10 r11 r10
+036:  SW   r10 r0  51
+037:  ORI  r11 r0  0x01a5
+038:  SHL  r11 r11 16
+039:  ANDI r10 r25 0x5563
+040:  OR   r10 r11 r10
+041:  SW   r10 r0  52
+042:  ORI  r11 r0  0x91ce
+043:  SHL  r11 r11 16
+044:  ANDI r10 r25 0xa910
+045:  OR   r10 r11 r10
+046:  SW   r10 r0  53
+047:  JMP  KEY_EXP
 FIXED_DIN_INPUT:
-047:  ORI  r11 r0  0xeedb
-048:  SHL  r11 r11 16
-049:  ANDI r10 r25 0xa521
-050:  OR   r10 r11 r10
-051:  SW   r10 r0  54
-052:  ORI  r11 r0  0x6d8f
-053:  SHL  r11 r11 16
-054:  ANDI r10 r25 0x4b15
-055:  OR   r10 r11 r10
-056:  SW   r10 r0  55
-057:  JMP  MAIN
+048:  ORI  r11 r0  0xeedb
+049:  SHL  r11 r11 16
+050:  ANDI r10 r25 0xa521
+051:  OR   r10 r11 r10
+052:  SW   r10 r0  54
+053:  ORI  r11 r0  0x6d8f
+054:  SHL  r11 r11 16
+055:  ANDI r10 r25 0x4b15
+056:  OR   r10 r11 r10
+057:  SW   r10 r0  55
+058:  JMP  MAIN
 UKEY_INPUT:
-058:  ORI  r3  r0  0
-059:  ORI  r4  r0  4
+059:  ORI  r3  r0  3
+060:  ORI  r4  r0  4
 LOOP_UKEY_INPUT:
-060:  AND  r28 r20 r31
-061:  BEQ  r28 r20 -2
-062:  AND  r28 r20 r31
-063:  BNE  r28 r20 -2
-064:  OR   r11 r0  r31
-065:  SHL  r11 r11 16
-066:  AND  r28 r20 r31
-067:  BEQ  r28 r20 -2
-068:  AND  r28 r20 r31
-069:  BNE  r28 r20 -2
-070:  AND  r10 r25 r31
-071:  OR   r10 r11 r10
-072:  SW   r10 r2  50
-073:  ADDI r3  r3  1
-074:  BNE  r3  r4  LOOP_UKEY_INPUT
-075:  JMP  KEY_EXP
+061:  AND  r28 r23 r31
+062:  BEQ  r28 r23 -2
+063:  AND  r28 r23 r31
+064:  BNE  r28 r23 -2
+065:  OR   r11 r0  r31
+066:  SHL  r11 r11 16
+067:  AND  r28 r23 r31
+068:  BEQ  r28 r23 -2
+069:  AND  r28 r23 r31
+070:  BNE  r28 r23 -2
+071:  AND  r10 r25 r31
+072:  OR   r10 r11 r10
+073:  SW   r10 r3  50
+074:  SUBI r3  r3  1
+075:  BNE  r3  r2  LOOP_UKEY_INPUT
+076:  JMP  KEY_EXP
 DIN_INPUT:
-076:  ORI  r3  r0  0
-077:  ORI  r4  r0  2
+077:  ORI  r3  r0  0
+078:  ORI  r4  r0  2
 LOOP_DIN_INPUT:
-078:  AND  r28 r20 r31
-079:  BEQ  r28 r20 -2
-080:  AND  r28 r20 r31
-081:  BNE  r28 r20 -2
-082:  OR   r11 r0  r31
-083:  SHL  r11 r11 16
-084:  AND  r28 r20 r31
-085:  BEQ  r28 r20 -2
-086:  AND  r28 r20 r31
-087:  BNE  r28 r20 -2
-088:  AND  r10 r25 r31
-089:  OR   r10 r11 r10
-090:  SW   r10 r2  54
-091:  ADDI r3  r3  1
-092:  BNE  r3  r4  LOOP_DIN_INPUT
-093:  JMP  MAIN
+079:  AND  r28 r22 r31
+080:  BEQ  r28 r22 -2
+081:  AND  r28 r22 r31
+082:  BNE  r28 r22 -2
+083:  OR   r11 r0  r31
+084:  SHL  r11 r11 16
+085:  AND  r28 r22 r31
+086:  BEQ  r28 r22 -2
+087:  AND  r28 r22 r31
+088:  BNE  r28 r22 -2
+089:  AND  r10 r25 r31
+090:  OR   r10 r11 r10
+091:  SW   r10 r3  54
+092:  ADDI r3  r3  1
+093:  BNE  r3  r4  LOOP_DIN_INPUT
+094:  JMP  MAIN
 KEY_EXP:
-094:  ORI  r3  r0  3
+095:  ORI  r3  r0  3
 INIT_L:
-095:  LW   r10 r3  50
-096:  SW   r10 r3  26
-097:  SUBI r3  r3  1
-098:  BLT  r3  r2  INIT_L
-099:  ORI  r11 r0  0xB7E1
-100:  SHL  r11 r11 16
-101:  ANDI r10 r25 0x5163
-102:  OR   r8  r11 r10
-103:  ORI  r11 r0  0x9E37
-104:  SHL  r11 r11 16
-105:  ANDI r10 r25 0x79B9
-106:  OR   r9  r11 r10
-107:  ORI  r7  r8  0
-108:  SW   r3  r2  0
-109:  ORI  r3  r0  1
-110:  ORI  r4  r0  26
+096:  LW   r10 r3  50
+097:  SW   r10 r3  26
+098:  SUBI r3  r3  1
+099:  BLT  r3  r2  INIT_L
+100:  ORI  r11 r0  0xB7E1
+101:  SHL  r11 r11 16
+102:  ANDI r10 r25 0x5163
+103:  OR   r8  r11 r10
+104:  ORI  r11 r0  0x9E37
+105:  SHL  r11 r11 16
+106:  ANDI r10 r25 0x79B9
+107:  OR   r9  r11 r10
+108:  ORI  r7  r8  0
+109:  SW   r7  r0  0
+110:  ORI  r3  r0  1
+111:  ORI  r4  r0  26
 INIT_S:
-111:  ADD  r7  r7  r9
-112:  SW   r7  r3  0
-113:  ADDI r3  r3  1
-114:  BLT  r4  r3  INIT_S
-115:  ORI  r3  r0  0
-116:  ORI  r4  r0  0
-117:  ORI  r5  r0  0
-118:  ORI  r13 r0  26
-119:  ORI  r14 r0  4
-120:  ORI  r15 r0  78
-121:  ORI  r8  r0  26
-122:  ORI  r9  r0  4
+112:  ADD  r7  r7  r9
+113:  SW   r7  r3  0
+114:  ADDI r3  r3  1
+115:  BLT  r4  r3  INIT_S
+116:  ORI  r3  r0  0
+117:  ORI  r4  r0  0
+118:  ORI  r5  r0  0
+119:  ORI  r13 r0  26
+120:  ORI  r14 r0  4
+121:  ORI  r15 r0  78
+122:  ORI  r8  r0  0
+123:  ORI  r9  r0  0
 LOOP_SKEY:
-123:  ADD  r8  r8  r9
-124:  LW   r7  r3  0
-125:  ADD  r7  r7  r8
-126:  SHL  r11 r7  3
-127:  SHR  r10 r7  29
-128:  OR   r8  r11 r10
-129:  SW   r8  r3  0
-130:  ADD  r9  r8  r9
-131:  LW   r7  r4  26
-132:  ADD  r7  r7  r9
-133:  ORI  r6  r0  0
-134:  AND  r16 r26 r9
-135:  OR   r11 r0  r7
-136:  JMP  LOOP_SHTL_0
-START_SHTL_0:
-137:  SHL  r11 r11 1
-138:  ADDI r6  r6  1
-LOOP_SHTL_0:
-139:  BLT  r16 r6  START_SHTL_0
-140:  ORI  r16 r0  32
-141:  OR   r10 r0  r7
-142:  JMP  LOOP_SHTR_0
-START_SHTR_0:
-143:  SHR  r10 r10 1
-144:  ADDI r6  r6  1
-LOOP_SHTR_0:
-145:  BLT  r16 r6  START_SHTR_0
-146:  OR   r9  r11 r10
-147:  SW   r9  r4  26
-148:  ADDI r3  r3  1
-149:  ADDI r4  r4  1
-150:  BLT  r13 r3  1
-151:  ORI  r3  r0  0
-152:  BLT  r14 r4  1
-153:  ORI  r4  r0  0
-154:  ADDI r5  r5  1
-155:  BLT  r15 r5  LOOP_SKEY
-156:  JMP  MAIN
-157:  LW   r15 r0  40
-158:  LW   r16 r0  41
-159:  ORI  r20 r0  0x001f
-160:  LW   r8  r0  0
-161:  ADD  r15 r15 r8
-162:  LW   r8  r0  1
-163:  ADD  r16 r16 r8
-164:  ORI  r2  r0  1
-165:  ORI  r3  r0  13
-EN_ROUND:
-166:  SHL  r4  r2  1
+124:  ADD  r8  r8  r9
+125:  LW   r7  r3  0
+126:  ADD  r7  r7  r8
+127:  SHL  r11 r7  3
+128:  SHR  r10 r7  29
+129:  OR   r8  r11 r10
+130:  SW   r8  r3  0
+131:  ADD  r9  r8  r9
+132:  LW   r7  r4  26
+133:  ADD  r7  r7  r9
+134:  ORI  r6  r0  0
+135:  AND  r16 r26 r9
+136:  OR   r11 r0  r7
+137:  BEQ  r0  r0  2
+138:  SHL  r11 r11 1
+139:  ADDI r6  r6  1
+140:  BLT  r16 r6  -3
+141:  ORI  r16 r0  32
+142:  OR   r10 r0  r7
+143:  BEQ  r0  r0  2
+144:  SHR  r10 r10 1
+145:  ADDI r6  r6  1
+146:  BLT  r16 r6  -3
+147:  OR   r9  r11 r10
+148:  SW   r9  r4  26
+149:  ADDI r3  r3  1
+150:  ADDI r4  r4  1
+151:  BLT  r13 r3  1
+152:  ORI  r3  r0  0
+153:  BLT  r14 r4  1
+154:  ORI  r4  r0  0
+155:  ADDI r5  r5  1
+156:  BLT  r15 r5  LOOP_SKEY
+157:  JMP  MAIN
+ENCRYPTION:
+158:  LW   r8  r0  54
+159:  LW   r9  r0  55
+160:  LW   r7  r0  0
+161:  ADD  r8  r8  r7
+162:  LW   r7  r0  1
+163:  ADD  r9  r9  r7
+164:  ORI  r3  r0  1
+165:  ORI  r13 r0  13
+LOOP_ENC:
+166:  SHL  r4  r3  1
 167:  ADDI r5  r4  1
-168:  AND  r14 r15 r16
-169:  NOR  r14 r14 r0
-170:  ORI  r13 r14 0
-171:  AND  r14 r14 r16
-172:  NOR  r14 r14 r0
-173:  AND  r13 r13 r15
-174:  NOR  r13 r13 r0
-175:  AND  r8  r13 r14
-176:  NOR  r8  r8  r0
-177:  AND  r7  r20 r16
-178:  SUBI r10 r7  32
-179:  OR   r9  r0  r8
-180:  ORI  r11 r0  0
-ENA_SL_START:
-181:  BEQ  r11 r7  ENA_SL_END
-182:  SHL  r9  r9  1
-183:  ADDI r11 r11 1
-184:  JMP  ENA_SL_START
-ENA_SL_END:
-185:  ORI  r11 r0  0
-ENA_SR_START:
-186:  BEQ  r11 r10 ENA_SR_END
-187:  SHR  r8  r8  1
-188:  SUBI r11 r11 1
-189:  JMP  ENA_SR_START
-ENA_SR_END:
-190:  OR   r9  r9  r8
-191:  LW   r8  r4  0
-192:  ADD  r15 r8  r9
-193:  AND  r14 r15 r16
-194:  NOR  r14 r14 r0
-195:  ORI  r13 r14 0
-196:  AND  r14 r14 r16
-197:  NOR  r14 r14 r0
-198:  AND  r13 r13 r15
-199:  NOR  r13 r13 r0
-200:  AND  r8  r13 r14
-201:  NOR  r8  r8  r0
-202:  AND  r7  r20 r15
-203:  SUBI r10 r7  32
-204:  OR   r9  r0  r8
-205:  ORI  r11 r0  0
-ENB_SL_START:
-206:  BEQ  r11 r7  ENB_SL_END
-207:  SHL  r9  r9  1
-208:  ADDI r11 r11 1
-209:  JMP  ENB_SL_START
-ENB_SL_END:
-210:  ORI  r11 r0  0
-ENB_SR_START:
-211:  BEQ  r11 r10 ENB_SR_END
-212:  SHR  r8  r8  1
-213:  SUBI r11 r11 1
-214:  JMP  ENB_SR_START
-ENB_SR_END:
-215:  OR   r9  r9  r8
-216:  LW   r8  r5  0
-217:  ADD  r16 r8  r9
-218:  ADDI r2  r2  1
-219:  BLT  r3  r2  EN_ROUND
-220:  SW   r15 r0  42
-221:  SW   r16 r0  43
-222:  LW   r15 r0  42
-223:  LW   r16 r0  43
-224:  ORI  r20 r0  0x001f
-225:  ORI  r2  r0  12
-DE_ROUND:
-226:  SHL  r4  r2  1
-227:  ADDI r5  r4  1
-228:  LW   r8  r5  0
-229:  SUB  r8  r16 r8
-230:  AND  r7  r20 r15
-231:  SUBI r10 r7  32
-232:  OR   r9  r0  r8
-233:  ORI  r11 r0  0
-DEB_SR_START:
-234:  BEQ  r11 r7  DEB_SR_END
-235:  SHR  r9  r9  1
-236:  ADDI r11 r11 1
-237:  JMP  DEB_SR_START
-DEB_SR_END:
-238:  ORI  r11 r0  0
-DEB_SL_START:
-239:  BEQ  r11 r10 DEB_SL_END
-240:  SHL  r8  r8  1
-241:  SUBI r11 r11 1
-242:  JMP  DEB_SL_START
-DEB_SL_END:
-243:  OR   r16 r8  r9
-244:  AND  r14 r15 r16
-245:  NOR  r14 r14 r0
-246:  ORI  r13 r14 0
-247:  AND  r14 r14 r16
-248:  NOR  r14 r14 r0
-249:  AND  r13 r13 r15
-250:  NOR  r13 r13 r0
-251:  AND  r8  r13 r14
-252:  NOR  r16 r8  r0
-253:  LW   r8  r4  0
-254:  SUB  r8  r15 r8
-255:  AND  r7  r20 r16
-256:  SUBI r10 r7  32
-257:  OR   r9  r0  r8
-258:  ORI  r11 r0  0
-DEA_SR_START:
-259:  BEQ  r11 r7  DEA_SR_END
-260:  SHR  r9  r9  1
-261:  ADDI r11 r11 1
-262:  JMP  DEA_SR_START
-DEA_SR_END:
-263:  ORI  r11 r0  0
-DEA_SL_START:
-264:  BEQ  r11 r10 DEA_SL_END
-265:  SHL  r8  r8  1
-266:  SUBI r11 r11 1
-267:  JMP  DEA_SL_START
-DEA_SL_END:
-268:  OR   r15 r8  r9
-269:  AND  r14 r15 r16
-270:  NOR  r14 r14 r0
-271:  ORI  r13 r14 0
-272:  AND  r14 r14 r16
-273:  NOR  r14 r14 r0
-274:  AND  r13 r13 r15
-275:  NOR  r13 r13 r0
-276:  AND  r8  r13 r14
-277:  NOR  r15 r8  r0
-278:  SUBI r2  r2  1
-279:  BNE  r2  r0  DE_ROUND
-280:  LW   r8  r0  1
-281:  SUB  r16 r16 r8
-282:  LW   r8  r0  0
-283:  SUB  r15 r15 r8
-284:  SW   r15 r0  44
-285:  SW   r16 r0  45
-286:  HAL
+168:  AND  r11 r8  r9
+169:  NOR  r11 r11 r0
+170:  ORI  r10 r11 0
+171:  AND  r11 r11 r9
+172:  NOR  r11 r11 r0
+173:  AND  r10 r10 r8
+174:  NOR  r10 r10 r0
+175:  AND  r10 r11 r10
+176:  NOR  r10 r10 r0
+177:  OR   r11 r10 r10
+178:  ORI  r6  r0  0
+179:  AND  r16 r26 r9
+180:  BEQ  r0  r0  2
+181:  SHL  r11 r11 1
+182:  ADDI r6  r6  1
+183:  BLT  r16 r6  -3
+184:  ORI  r16 r0  32
+185:  BEQ  r0  r0  2
+186:  SHR  r10 r10 1
+187:  ADDI r6  r6  1
+188:  BLT  r16 r6  -3
+189:  OR   r10 r11 r10
+190:  LW   r7  r4  0
+191:  ADD  r8  r10 r7
+192:  AND  r11 r8  r9
+193:  NOR  r11 r11 r0
+194:  ORI  r10 r11 0
+195:  AND  r11 r11 r9
+196:  NOR  r11 r11 r0
+197:  AND  r10 r10 r8
+198:  NOR  r10 r10 r0
+199:  AND  r10 r11 r10
+200:  NOR  r10 r10 r0
+201:  OR   r11 r10 r10
+202:  ORI  r6  r0  0
+203:  AND  r16 r26 r8
+204:  BEQ  r0  r0  2
+205:  SHL  r11 r11 1
+206:  ADDI r6  r6  1
+207:  BLT  r16 r6  -3
+208:  ORI  r16 r0  32
+209:  BEQ  r0  r0  2
+210:  SHR  r10 r10 1
+211:  ADDI r6  r6  1
+212:  BLT  r16 r6  -3
+213:  OR   r10 r11 r10
+214:  LW   r7  r5  0
+215:  ADD  r9  r10 r7
+216:  ADDI r3  r3  1
+217:  BNE  r3  r13 LOOP_ENC
+218:  SW   r8  r0  30
+219:  SW   r9  r0  31
+220:  JMP  MAIN
+DECRYPTION:
+221:  LW   r8  r0  54
+222:  LW   r9  r0  55
+223:  ORI  r3  r0  12
+LOOP_DEC:
+224:  SHL  r4  r3  1
+225:  ADDI r5  r4  1
+226:  LW   r7  r5  0
+227:  SUB  r10 r9  r7
+228:  OR   r11 r10 r10
+229:  ORI  r6  r0  0
+230:  AND  r16 r26 r8
+231:  BEQ  r0  r0  2
+232:  SHR  r10 r10 1
+233:  ADDI r6  r6  1
+234:  BLT  r16 r6  -3
+235:  ORI  r16 r0  32
+236:  BEQ  r0  r0  2
+237:  SHL  r11 r11 1
+238:  ADDI r6  r6  1
+239:  BLT  r16 r6  -3
+240:  OR   r9  r11 r10
+241:  AND  r11 r8  r9
+242:  NOR  r11 r11 r0
+243:  ORI  r10 r11 0
+244:  AND  r11 r11 r9
+245:  NOR  r11 r11 r0
+246:  AND  r10 r10 r8
+247:  NOR  r10 r10 r0
+248:  AND  r10 r11 r10
+249:  NOR  r9  r10 r0
+250:  LW   r7  r4  0
+251:  SUB  r10 r8  r7
+252:  OR   r11 r10 r10
+253:  ORI  r6  r0  0
+254:  AND  r16 r26 r9
+255:  BEQ  r0  r0  2
+256:  SHR  r10 r10 1
+257:  ADDI r6  r6  1
+258:  BLT  r16 r6  -3
+259:  ORI  r16 r0  32
+260:  BEQ  r0  r0  2
+261:  SHL  r11 r11 1
+262:  ADDI r6  r6  1
+263:  BLT  r16 r6  -3
+264:  OR   r8  r11 r10
+265:  AND  r11 r8  r9
+266:  NOR  r11 r11 r0
+267:  ORI  r10 r11 0
+268:  AND  r11 r11 r9
+269:  NOR  r11 r11 r0
+270:  AND  r10 r10 r8
+271:  NOR  r10 r10 r0
+272:  AND  r10 r11 r10
+273:  NOR  r8  r10 r0
+274:  SUBI r3  r3  1
+275:  BNE  r3  r0  LOOP_DEC
+276:  LW   r7  r0  1
+277:  SUB  r9  r9  r7
+278:  LW   r7  r0  0
+279:  SUB  r8  r8  r7
+280:  SW   r8  r0  32
+281:  SW   r9  r0  33
+282:  JMP  MAIN
+283:  HAL
