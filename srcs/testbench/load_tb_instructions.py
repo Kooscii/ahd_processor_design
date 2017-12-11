@@ -39,7 +39,7 @@ addr2labl = {}
 # reading instructions and mapping label to line no.
 # asm_code = open('asm_code/code1.asm', 'r').readlines()
 # asm_code = open('asm_code/code2.asm', 'r').readlines()
-asm_code = open('asm_code/rc5.asm', 'r').readlines()
+asm_code = open('asm_code/rc5_optimized.asm', 'r').readlines()
 
 idx = 0
 for line in asm_code:
@@ -61,7 +61,7 @@ for line in asm_code:
         instructions.append(inst)
         idx += 1
 
-print(labl2addr)
+# print(labl2addr)
 
 # compiling
 inst_dec = [2**32-1 for _ in xrange(256)]

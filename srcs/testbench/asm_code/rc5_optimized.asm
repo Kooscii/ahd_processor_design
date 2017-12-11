@@ -22,6 +22,7 @@
 #
 ORI r0 r0 0             # r0 <- $zero
 ORI r1 r0 1             # r1 <- $one
+ORI r2 r0 -1            # r2 <- $minus_one
 SHL r20 r1 16           # r20 <- 0x00010000
 SHL r21 r20 1           # r21 <- 0x00020000
 SHL r22 r21 1           # r22 <- 0x00040000
@@ -82,127 +83,203 @@ ORI r27 r0 0xffff       # r27 <- 0xffffffff
 
 ###### Input from switches #####
 #   r28 <- interupt register
-#   r2 <- i
-#   r3 <- 4 (upper limit of the loop)
+#   r3 <- i
+#   r4 <- 4 (upper limit of the loop)
 #
-#   for(r2=0; r2!=r3; r2++) {
+#   for(r3=0; r3!=r4; r3++) {
 #       wait for btn[0];
 #       r10 = switches;
 #       wait for btn[0];
 #       r11 = switches;
-#       MEM[r2+50] = (r11<<16) + r10;
+#       MEM[r3+50] = (r11<<16) + r10;
 #   }
 
-# ukey
-ORI r2 r0 0                         # i = 0
-ORI r3 r0 4
+#############################################
+#   MAIN LOOP
+#############################################
+#   press btn[4] to rst   
+#   press btn[3] to set ukey
+#   press btn[2] to set din
+#   press btn[1] to start encryption
+#   press btn[0] to start decryption
+
+MAIN:
+SHR r28 r31 16
+BNE r28 r0 MAIN                 # wait for all buttons are released
+
+# if btn[3] is pressed
+AND r28 r23 r31
+BNE r28 r23 1
+JMP UKEY_INPUT                 # goto UKEY_INPUT subprogram
+
+# if btn[2] is pressed
+AND r28 r22 r31
+BNE r28 r22 1
+JMP DIN_INPUT                  # goto DIN_INPUT subprogram
+
+# if btn[1] is pressed
+AND r28 r21 r31
+BNE r28 r21 1
+JMP MAIN                   # goto ENCRYPTO subprogram
+
+# if btn[0] is pressed
+AND r28 r20 r31
+BNE r28 r20 1
+JMP MAIN                   # goto DECRYPTO subprogram
+
+JMP MAIN
+
+#############################################
+#   Subprogram: UKEY_INPUT
+#############################################
 UKEY_INPUT:
+ORI r3 r0 0                         # i = 0
+ORI r4 r0 4
+LOOP_UKEY_INPUT:
 AND r28 r20 r31                 # wait btn[0] release
 BEQ r28 r20 -2
 AND r28 r20 r31                 # wait btn[0] press
 BNE r28 r20 -2
-ANDI r10 r25 r31                # 16 LSB
+OR r11 r0 r31                   # 16 MSB
+SHL r11 r11 16
 
 AND r28 r20 r31                 # wait btn[0] release
 BEQ r28 r20 -2
 AND r28 r20 r31                 # wait btn[0] press
 BNE r28 r20 -2
-ORI r11 r0 r31                  # 16 MSB
-SHL r11 r11 16
+AND r10 r25 r31                 # 16 LSB
 
 OR r10 r11 r10                  # r10 <- 16 MSB + 16 LSB
 SW r10 r2 50                    # MEM[2+50] = ukey[2]
 
-ADDI r2 r2 1                    # i += 1
-BNE r2 r3 UKEY_INPUT            # loop until r2 = 5
+ADDI r3 r3 1                    # i += 1
+BNE r3 r4 LOOP_UKEY_INPUT       # loop until r2 = 5
 
+JMP KEY_EXP                    # goto KEY_EXP
+
+#############################################
+#   Subprogram: DIN_INPUT
+#############################################
+DIN_INPUT:
+ORI r3 r0 0                         # i = 0
+ORI r4 r0 2
+LOOP_DIN_INPUT:
+AND r28 r20 r31                 # wait btn[0] release
+BEQ r28 r20 -2
+AND r28 r20 r31                 # wait btn[0] press
+BNE r28 r20 -2
+OR r11 r0 r31                   # 16 MSB
+SHL r11 r11 16
+
+AND r28 r20 r31                 # wait btn[0] release
+BEQ r28 r20 -2
+AND r28 r20 r31                 # wait btn[0] press
+BNE r28 r20 -2
+AND r10 r25 r31                 # 16 LSB
+
+OR r10 r11 r10                  # r10 <- 16 MSB + 16 LSB
+SW r10 r2 54                    # MEM[2+50] = ukey[2]
+
+ADDI r3 r3 1                    # i += 1
+BNE r3 r4 LOOP_DIN_INPUT        # loop until r2 = 5
+JMP MAIN                       # return to main
 
 #########################################
 #   UKEY EXPANSION
 #########################################
-#   K mem_offset 50, S mem_offset 0, L mem_offset 26
-
-# initialize L and S
-ORI r2 r0 4             # i = 4
-L_INIT:
-SUBI r2 r2 1            # i -= 1
-LW r11 r2 50            # r11 <- K[i]
-SW r11 r2 26            # L[i] <- K[i]
-BNE r2 r0 L_INIT
-# P, Q
-ORI r8 r0 0xB7E1
-SHL r8 r8 16
-ORI r8 r8 0x5163        # P
-ORI r9 r0 0x9E37
-SHL r9 r9 16
-ORI r9 r9 0x79B9        # Q
-# S offset 0
-ORI r3 r8 0             # S_acc = P
-ORI r2 r0 0             # i = 0
-ORI r4 r0 26            # count
-S_INIT:
-SW r3 r2 0              # S[i] = S_acc
-ADD r3 r3 r9            # S_acc += Q
-ADDI r2 r2 1            # i += 1
-BNE r2 r4 S_INIT
-
-# generate skey
-ORI r2 r0 0             # i
-ORI r3 r0 0             # j
-ORI r4 r0 0             # k
-ORI r5 r0 78            # 78
-ORI r6 r0 0             # A
-ORI r7 r0 0             # B
-ORI r20 r0 0x001f       # rot mask
-ORI r21 r0 26           # t
-ORI r22 r0 4            # c
+#   K memory offset: 50
+#   S memory offset: 0
+#   L memory offset: 26
+#   r10, r11 <- temporary registers
 
 KEY_EXP:
-ADD r6 r6 r7            # A = A+B
-LW r8 r2 0              # r8 <- S[i]
-ADD r8 r6 r8            # S[i]+A+B
-# left rotate by 3
-SHL r9 r8 3             # r8 <- rotl higher bits
-SHR r8 r8 29            # r9 <- rotl lower bits
-OR r6 r9 r8             # rotl 3
-SW r6 r2 0              # S[i] = A
+# initialize L
+ORI r3 r0 3                     # i = 3
+INIT_L:
+LW r10 r3 50                    # r11 <- K[i]
+SW r10 r3 26                    # L[i] <- K[i]
+SUBI r3 r3 1                    # i -= 1
+BLT r3 r2 INIT_L                # loop if r3 > -1 (3,...,0)
 
-ADD r7 r6 r7            # B = A+B
-LW r8 r3 26             # r8 <- L[j]
-ADD r8 r7 r8            # L[j]+A+B
-# left rotate
-AND r7 r20 r7           # A+B lower 5 bits
-SUBI r10 r7 32          # lower 5 bits - 32
-OR r9 r0 r8
+# P, Q
+# r8, r9 <- P, Q
+ORI r11 r0 0xB7E1       
+SHL r11 r11 16                  # r11 <- 16 MSB
+ANDI r10 r25 0x5163             # r10 <- 16 LSB
+OR r8 r11 r10                   # r8 <- P = 16 MSB + 16 LSB
+ORI r11 r0 0x9E37       
+SHL r11 r11 16                  # r11 <- 16 MSB
+ANDI r10 r25 0x79B9             # r10 <- 16 LSB
+OR r9 r11 r10                   # r9 <- Q = 16 MSB + 16 LSB
 
-ORI r11 r0 0
-SL_START:
-BEQ r11 r7 SL_END
-SHL r9 r9 1             # r9 <- rotl higher bits
-ADDI r11 r11 1
-JMP SL_START
-SL_END:
-ORI r11 r0 0
-SR_START:
-BEQ r11 r10 SR_END
-SHR r8 r8 1             # r8 <- rotl lower bits
-SUBI r11 r11 1
-JMP SR_START
-SR_END:
+# initialize S
+ORI r7 r8 0                     # r7 <- S[i]; S[0] = P
+SW r3 r2 0                      # MEM[0] <- S[0]
+ORI r3 r0 1                     # i = 1
+ORI r4 r0 26                    # loop upper bound
+INIT_S:
+ADD r7 r7 r9                    # S[i] <- S[i-1] + Q
+SW r7 r3 0                      # MEM[i] <- S[i]
+ADDI r3 r3 1                    # i += 1
+BLT r4 r3 INIT_S                # loop if i < 26
 
-OR r7 r9 r8             # rotl A+B
-SW r7 r3 26             # L[j] = B
+# generate skey
+ORI r3 r0 0                     # i
+ORI r4 r0 0                     # j
+ORI r5 r0 0                     # k
+ORI r13 r0 26                   # i upper bound
+ORI r14 r0 4                    # j upper bound
+ORI r15 r0 78                   # k upper bound
+ORI r8 r0 26                    # A
+ORI r9 r0 4                     # B
+
+LOOP_SKEY:
+# calculate A
+ADD r8 r8 r9                    # r8 <- A = A+B
+LW r7 r3 0                      # r7 <- S[i]
+ADD r7 r7 r8                    # r7 <- S[i] = S[i] + A + B
+SHL r11 r7 3                    # r11 <- r7 << 3 (29 MSB)
+SHR r10 r7 29                   # r10 <- r7 >> 29 (3 LSB)
+OR r8 r11 r10                   # r8 <- A = rotl(S[i] + A + B, 3)
+SW r8 r3 0                      # S[i] = A
+# calculate B
+ADD r9 r8 r9                    # r9 <- B = A+B
+LW r7 r4 26                     # r7 <- L[j]
+ADD r7 r7 r9                    # r7 <- L[j] = L[j] + A + B
+
+ORI r6 r0 0                     # rotation counter
+AND r16 r26 r9                  # A + B: 5 LSB rotation bits
+OR r11 r0 r7
+JMP LOOP_SHTL_0
+START_SHTL_0:
+SHL r11 r11 1                   # r11 <- r11 << 1
+ADDI r6 r6 1                    # r6 += 1
+LOOP_SHTL_0:
+BLT r16 r6 START_SHTL_0         # loop if r6 < rotation bits
+
+ORI r16 r0 32                   # total rotation bits = 32
+OR r10 r0 r7
+JMP LOOP_SHTR_0
+START_SHTR_0:
+SHR r10 r10 1                   # r10 <- r10 >> 1
+ADDI r6 r6 1                    # r6 += 1
+LOOP_SHTR_0:
+BLT r16 r6 START_SHTR_0         # loop if r6 < 32
+
+OR r9 r11 r10                   # r9 <- B = rotl(L[j] + A + B, A+B)
+SW r9 r4 26                     # L[j] = B
 # increment
-ADDI r4 r4 1            # k += 1
-ADDI r2 r2 1            # i += 1
-ADDI r3 r3 1            # j += 1
-BNE r2 r21 1            # i = 0 if i = 26
-ORI r2 r0 0
-BNE r3 r22 1            # j = 0 if j = 4
-ORI r3 r0 0
+ADDI r3 r3 1                    # i += 1
+ADDI r4 r4 1                    # j += 1
+BLT r13 r3 1                    # if i >= 26:
+ORI r3 r0 0                     #   i = 0
+BLT r14 r4 1                    # if j >= 4:
+ORI r4 r0 0                     #   j = 0
 
-BNE r4 r5 KEY_EXP
+ADDI r5 r5 1                    # k += 1
+BLT r15 r5 LOOP_SKEY            # loop if k < 78
 
+JMP MAIN                        # return to main
 
 
 ##########################################
