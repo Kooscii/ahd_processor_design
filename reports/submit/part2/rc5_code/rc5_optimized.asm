@@ -347,7 +347,7 @@ NOR r11 r11 r0                  # r11 <- B nand (A nand B))
 AND r10 r10 r8                  # r10 <- A and (A nand B)
 NOR r10 r10 r0                  # r10 <- A nand (A nand B))
 AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
-NOR r10 r10 r0                  # r10 <- (B nand (A nand B))) nand (A nand (A nand B)))
+NOR r10 r10 r0                  # r10 <- A^B = (B nand (A nand B))) nand (A nand (A nand B)))
 OR r11 r10 r10                  # r11 <- r10
 
 ORI r6 r0 0                     # rotation counter

@@ -30,7 +30,8 @@ decode = {
     'BEQ':  {'type': 'I', 'op': 0x0a},
     'BNE':  {'type': 'I', 'op': 0x0b},
     'JMP':  {'type': 'J', 'op': 0x0c},
-    'HAL':  {'type': 'J', 'op': 0x3f}, }
+    'HAL':  {'type': 'J', 'op': 0x3f}, 
+}
 
 instructions = []
 labl2addr = {}
@@ -38,9 +39,9 @@ addr2labl = {}
 # reading instructions and mapping label to line no.
 # code_name = 'rc5_optimized'
 code_name = 'rc5'
-# asm_code = open('asm_code/code1.asm', 'r').readlines()
-# asm_code = open('asm_code/code2.asm', 'r').readlines()
-asm_code = open('asm_code/%s.asm'%code_name, 'r').readlines()
+# asm_code = open('code1.asm', 'r').readlines()
+# asm_code = open('code2.asm', 'r').readlines()
+asm_code = open('%s.asm'%code_name, 'r').readlines()
 
 idx = 0
 for line in asm_code:
@@ -111,7 +112,7 @@ inst_hex = [hex(i)[2:].strip('L').zfill(8) for i in inst_dec]
 
 
 # print the code
-with open('asm_code/rc5_optimized.code', 'w') as f:
+with open('rc5_optimized.code', 'w') as f:
     for no, inst in enumerate(instructions):
         if no in addr2labl:
             print(*addr2labl[no])
@@ -128,12 +129,12 @@ with open('asm_code/rc5_optimized.code', 'w') as f:
     
 print()
 
-with open('asm_code/%s.binary'%code_name, 'w') as f:
+with open('%s.binary'%code_name, 'w') as f:
     for no, _ in enumerate(instructions):
         print(no, ':', inst_bin[no])
         f.write(inst_bin[no]+'\n')
 
-with open('asm_code/%s.hex'%code_name, 'w') as f:
+with open('%s.hex'%code_name, 'w') as f:
     for no, _ in enumerate(instructions):
         print(inst_hex[no])
         f.write(inst_hex[no]+'\n')
