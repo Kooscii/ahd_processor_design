@@ -1,0 +1,28 @@
+1 component
+    contributor: netid
+
+    1.1 Implementation
+        block diagram
+
+        IN PORT:
+            port_name: explanation
+        OUT PORT:
+            port_name: explanation
+
+        What is this component for? How this component work? 
+
+    1.2 Testbench
+        What you do in the testbench? 
+
+        1.2.1 Functional simulation
+            3 Screenshots for all cases, example 1, example 2
+            each screenshot should be follow by a brief explanation
+            Make the screenshots larger and clearer!
+
+        1.2.2 Timing simulation
+            3 Screenshots for all cases, example 1, example 2
+            each screenshot should be follow by a brief explanation
+            Make the screenshots larger and clearer!
+
+    1.3 Analysis
+        crtical path delay, latency, propagation delay
