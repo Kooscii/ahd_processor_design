@@ -64,22 +64,22 @@ for line in asm_code:
 # print(labl2addr)
 
 # compiling
-inst_dec = [2**32-1 for _ in xrange(256)]
+inst_dec = [2**32-1 for _ in xrange(512)]
 for no, inst in enumerate(instructions):
         op = decode[inst[0]]['op']
 
         # r-type
         if decode[inst[0]]['type'] == 'R':
-            rs = int(inst[1][1:])
-            rt = int(inst[2][1:])
-            rd = int(inst[3][1:])
+            rd = int(inst[1][1:])
+            rs = int(inst[2][1:])
+            rt = int(inst[3][1:])
             func = decode[inst[0]]['func']
             inst_dec[no] = pack_rtype(op, rs, rt, rd, func)
             # print(hex(op), rs, rt, rd, hex(func))
 
         elif decode[inst[0]]['type'] == 'I':
-            rs = int(inst[1][1:])
-            rt = int(inst[2][1:])
+            rt = int(inst[1][1:])
+            rs = int(inst[2][1:])
             try:
                 if inst[3][0:2] == '0x':
                     imm = int(inst[3], 16)
@@ -110,14 +110,34 @@ inst_hex = [hex(i)[2:].strip('L').zfill(8) for i in inst_dec]
 
 
 # print the code
-for no, inst in enumerate(instructions):
-    if no in addr2labl:
-        print(*addr2labl[no])
-    print('%03d:'%no, *inst)
+with open('asm_code/rc5_optimized.code', 'w') as f:
+    for no, inst in enumerate(instructions):
+        if no in addr2labl:
+            print(*addr2labl[no])
+            f.write(' '.join(addr2labl[no])+'\n')
+        if len(inst) == 1:      # halt
+            f.write(('%03d:  %-s\n')%((no,)+tuple(inst)))
+            print(('%03d:  %-s')%((no,)+tuple(inst)))
+        elif len(inst) == 2:    # jmp
+            f.write(('%03d:  %-4s %-s\n')%((no,)+tuple(inst)))
+            print(('%03d:  %-4s %-s')%((no,)+tuple(inst)))
+        else:
+            f.write(('%03d:  %-4s %-3s %-3s %-s\n')%((no,)+tuple(inst)))
+            print(('%03d:  %-4s %-3s %-3s %-s')%((no,)+tuple(inst)))
+    
 print()
 
-for no, _ in enumerate(instructions):
-    print('%03d:'%no, inst_bin[no], inst_hex[no], inst_dec[no])
+with open('asm_code/rc5_optimized.binary', 'w') as f:
+    for no, _ in enumerate(instructions):
+        print(inst_bin[no])
+        f.write(inst_bin[no]+'\n')
+
+with open('asm_code/rc5_optimized.hex', 'w') as f:
+    for no, _ in enumerate(instructions):
+        print(inst_hex[no])
+        f.write(inst_hex[no]+'\n')
+
+inst_hex[no], inst_dec[no]
 
 # write into inst_mem
 inst_mem = open('tb_cpu.vhd', 'r').readlines()
@@ -132,7 +152,7 @@ with open('tb_cpu.vhd', 'w') as f:
         f.write('\t\tx"%s",\n'%h)
         print('\t\tx"%s",'%h)
     f.write('\t\tx"%s"\n'%inst_hex[-1])
-    print('\t\tx"%s",'%h)
+    print('\t\tx"%s"'%h)
 
     while '<<< end <<<' not in inst_mem[i]:
         i += 1

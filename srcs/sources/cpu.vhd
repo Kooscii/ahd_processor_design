@@ -13,7 +13,7 @@ entity cpu is
           an : out std_logic_vector (3 downto 0);
           dp : out std_logic;
           -- inst update
-          prog_addr : in std_logic_vector (9 downto 0);
+          prog_addr : in std_logic_vector (31 downto 0);
           prog_wd : in std_logic_vector (31 downto 0);
           prog_clk : in std_logic;
           -- debug signal
@@ -200,8 +200,9 @@ begin
     inst_addr <= inst(25 downto 0);
     
     -- inst mem
-    pc(9 downto 0) <= prog_addr or pc_run(9 downto 0);
-    pc(31 downto 10) <= pc_run(31 downto 10);
+--    pc(9 downto 0) <= prog_addr or pc_run(9 downto 0);
+--    pc(31 downto 10) <= pc_run(31 downto 10);
+    pc <= prog_addr or pc_run;
     U_ins_mem : ins_mem 
        port map ( inst => inst,
                   addr => pc,
