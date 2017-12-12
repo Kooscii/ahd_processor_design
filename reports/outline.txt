@@ -2,7 +2,7 @@
     contributor: netid
 
     1.1 Implementation
-        block diagram
+        block diagram (use the picture I give)
 
         IN PORT:
             port_name: explanation
