@@ -10,7 +10,7 @@ entity cpu is
           btn : in std_logic_vector (4 downto 0);
           -- 7-seg
           seg : out std_logic_vector (6 downto 0);
-          an : out std_logic_vector (7 downto 0);
+          an : out std_logic_vector (3 downto 0);
           dp : out std_logic;
           -- inst update
           prog_addr : in std_logic_vector (31 downto 0);
@@ -112,9 +112,8 @@ architecture Behavioral of cpu is
                led_din : in STD_LOGIC_VECTOR (31 downto 0);
                seg : out STD_LOGIC_VECTOR (6 downto 0);
                dp : out STD_LOGIC;
-               an : out STD_LOGIC_VECTOR (7 downto 0);
+               an : out std_logic_vector (3 downto 0);
                led : out STD_LOGIC_VECTOR (15 downto 0);
-               rst : in STD_LOGIC;
                clk : in STD_LOGIC);
     end component;
     
@@ -170,41 +169,19 @@ architecture Behavioral of cpu is
     -- 7-seg and led display
     signal seg_din : std_logic_vector (31 downto 0);
     signal led_din : std_logic_vector (31 downto 0);
-    
-    signal clk_div4 : std_logic := '0';
 
 begin
 
-    process (clk)
-        variable setup : std_logic := '0';
-        variable d : integer := 0;
-    begin
-        if rising_edge(clk) then
-            if setup = '1' then
-                d := d + 1;
-                if d = 2 then
-                    d := 0;
-                    clk_div4 <= not clk_div4;
-                end if;    
-            else
-                clk_div4 <= '0';
-                setup := '1';
-                d := 0;
-            end if ;
-        end if;
-    end process;
-            
-        
     U_rst : reset_unit
         Port map ( 
-            clk => clk_div4,
+            clk => clk,
             rst_in => rst,
             rst_out => rst_sync);
 
     -- pc_run
    U_pc : pc_unit
         Port map ( 
-            clk => clk_div4,
+            clk => clk,
             rst => rst_sync,
             branch => ctrl_branch,
             condi => alu_condi,
@@ -249,7 +226,7 @@ begin
     U_reg_file : reg_file
         port map ( rd1 => reg_rd1,
                    rd2 => reg_rd2,
-                   clk => clk_div4,
+                   clk => clk,
                    rst => rst_sync,
                    we => ctrl_regwrt,
                    rs => inst_rs,
@@ -263,12 +240,7 @@ begin
     r31_raw_btn_sw (31 downto 21) <= (others=> '0');
     r31_raw_btn_sw (20 downto 16) <= btn;
     r31_raw_btn_sw (15 downto 0) <= sw;
-    U_debounce32 : debounce32 
-        port map (
-            clk=>clk_div4, 
-            rst=>rst, 
-            din=>r31_raw_btn_sw, 
-            dout=>r31_debounced);
+    U_debounce32 : debounce32 port map (clk=>clk, rst=>rst, din=>r31_raw_btn_sw, dout=>r31_debounced);
                   
     U_seg_led : seg_led
         Port map ( seg_din => seg_din,
@@ -277,8 +249,7 @@ begin
                    dp => dp,
                    an => an,
                    led => led,
-                   rst => rst,
-                   clk => clk_div4);
+                   clk => clk);
                    
     with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_rd2 when others;
     U_alu : alu 
@@ -295,7 +266,7 @@ begin
                    
     U_data_mem : data_mem
         port map ( rd => mem_rd,
-                   clk => clk_div4,
+                   clk => clk,
                    rst => rst_sync,
                    we => ctrl_sw,
                    addr => alu_result,

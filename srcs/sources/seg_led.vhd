@@ -24,7 +24,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
@@ -36,18 +36,50 @@ entity seg_led is
            led_din : in STD_LOGIC_VECTOR (31 downto 0);
            seg : out STD_LOGIC_VECTOR (6 downto 0);
            dp : out STD_LOGIC;
-           an : out std_logic_vector (3 downto 0);
+           an : out std_logic_vector (7 downto 0);
            led : out STD_LOGIC_VECTOR (15 downto 0);
+           rst : in STD_LOGIC;
            clk : in STD_LOGIC);
 end seg_led;
 
 architecture Behavioral of seg_led is
 
+    type type_segcode is array (0 to 15) of std_logic_vector (6 downto 0);
+    signal seg_code : type_segcode := (
+        "1000000", "1111001", "0100100", "0110000",
+        "0011001", "0010010", "0000010", "1111000",
+        "0000000", "0010000", "0001000", "0000011",
+        "1000110", "0100001", "0000110", "0001110");
+        
+    type type_ancode is array (0 to 7) of std_logic_vector (7 downto 0);
+    signal an_code : type_ancode := (
+        "11111110", "11111101", "11111011", "11110111",
+        "11101111", "11011111", "10111111", "01111111");
+    
+    signal i : integer := 0;
 begin
-
-    seg <= seg_din(6 downto 0);
-    dp <= seg_din(7);
-    an <= (others=>'0');
+    
+    process (clk, rst)
+        variable t : integer := 0;
+    begin
+        if rst = '1' then
+            t := 0;
+            i <= 0;
+        elsif rising_edge(clk) then
+            if t > 250000 then      -- refresh rate 100Hz
+                t := 0;
+                if i = 7 then
+                    i <= 0;
+                else
+                    i <= i + 1;
+                end if;
+            end if;
+        end if;
+    end process;
+      
     led <= led_din(15 downto 0);
-
+    an <= an_code(i);
+    seg <= seg_code(TO_INTEGER(unsigned(seg_din(i*4+3 downto i*4))));
+    dp <= '1';
+    
 end Behavioral;
