@@ -4,7 +4,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity cpu is
    Port ( clk : in std_logic;
-          rst : in std_logic;
+          cpu_rst : in std_logic;
           sw : in std_logic_vector (15 downto 0);
           led : out std_logic_vector (15 downto 0);
           btn : in std_logic_vector (4 downto 0);
@@ -12,18 +12,25 @@ entity cpu is
           seg : out std_logic_vector (6 downto 0);
           an : out std_logic_vector (7 downto 0);
           dp : out std_logic;
-          -- inst update
-          prog_addr : in std_logic_vector (31 downto 0);
-          prog_wd : in std_logic_vector (31 downto 0);
-          prog_clk : in std_logic;
-          -- debug signal
-          debug_0 : out std_logic_vector (31 downto 0);
-          debug_1 : out std_logic_vector (31 downto 0)
+          tx : out std_logic;
+          rx : in std_logic
+--          -- inst update
+--          prog_addr : in std_logic_vector (31 downto 0);
+--          prog_wd : in std_logic_vector (31 downto 0);
+--          prog_clk : in std_logic;
+--          -- debug signal
+--          debug_0 : out std_logic_vector (31 downto 0);
+--          debug_1 : out std_logic_vector (31 downto 0)
           );
 end cpu;
 
 architecture Behavioral of cpu is
 
+    -- if fixed instructions
+    signal prog_addr : std_logic_vector (31 downto 0) := (others=>'0');
+    signal prog_wd : std_logic_vector (31 downto 0) := (others=>'0');
+    signal prog_clk : std_logic := '0';
+    
     component reset_unit is
     Port ( clk : in STD_LOGIC;
            rst_in : in STD_LOGIC;
@@ -172,14 +179,20 @@ architecture Behavioral of cpu is
     signal led_din : std_logic_vector (31 downto 0);
     
     signal clk_div4 : std_logic := '0';
+    signal rst : std_logic;
 
 begin
 
-    process (clk)
+    rst <= not cpu_rst;
+
+    process (clk, rst)
         variable setup : std_logic := '0';
         variable d : integer := 0;
     begin
-        if rising_edge(clk) then
+        if rst = '1' then
+            setup := '0';
+            d := 0;
+        elsif rising_edge(clk) then
             if setup = '1' then
                 d := d + 1;
                 if d = 2 then
@@ -303,8 +316,8 @@ begin
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
     
-    -- debug signal
-    debug_0 <= led_din;
-    debug_1 <= seg_din;
+--    -- debug signal
+--    debug_0 <= led_din;
+--    debug_1 <= seg_din;
 
 end Behavioral;
