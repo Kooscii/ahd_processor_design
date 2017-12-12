@@ -37,8 +37,8 @@ instructions = []
 labl2addr = {}
 addr2labl = {}
 # reading instructions and mapping label to line no.
-# code_name = 'rc5_optimized'
-code_name = 'rc5'
+code_name = 'rc5_optimized'
+# code_name = 'rc5'
 # asm_code = open('asm_code/code1.asm', 'r').readlines()
 # asm_code = open('asm_code/code2.asm', 'r').readlines()
 asm_code = open('asm_code/%s.asm'%code_name, 'r').readlines()
