@@ -62,7 +62,7 @@ begin
                     end if;
                 when PRESSED =>     -- down-sampling
                     t := t + 1;
-                    if t > 5 then
+                    if t > 10000 then
                         if din = '0' then
                             state <= RELEASED;
                         end if;
@@ -70,7 +70,7 @@ begin
                     end if;  
                 when RELEASED =>     -- down-sampling
                     t := t + 1;
-                    if t > 5 then
+                    if t > 10000 then
                         if din = '0' then
                             state <= IDLE;
                         end if;

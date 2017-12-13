@@ -66,7 +66,8 @@ begin
             t := 0;
             i <= 0;
         elsif rising_edge(clk) then
-            if t > 250000 then      -- refresh rate 100Hz
+            t := t + 1;
+            if t > 10000 then      -- refresh rate 100Hz
                 t := 0;
                 if i = 7 then
                     i <= 0;
