@@ -12,7 +12,7 @@
         What is this component for? How this component work? 
 
     1.2 Testbench
-        What you do in the testbench? 
+        What you do in the testbench? Explain what you did with screenshots of your code.
 
         1.2.1 Functional simulation
             3 Screenshots for all cases, example 1, example 2

@@ -95,7 +95,7 @@ architecture Behavioral of cpu is
     component sign_ext is
         Port ( imm32 : out STD_LOGIC_VECTOR (31 downto 0);
                imm16 : in STD_LOGIC_VECTOR (15 downto 0));
-    end component;
+    end component; 
     
     component data_mem is
         Port ( rd : out STD_LOGIC_VECTOR (31 downto 0);
