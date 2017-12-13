@@ -57,7 +57,25 @@
             screenshot and explain
 
         2.3.5 Analysis
-            crtical path delay and figure out which path is it
+            utilization, crtical path delay, highest frequency and figure out which path is it
 
 3. RC5 Implementation
-    TODO, depending on the newly added requirements
+    3.1 Assmebly code
+        3.1.1 FSM diagram
+        3.1.2 Time complexity analysis
+        3.1.3 XOR optimization
+        3.1.4 ROTATE optimization
+
+    3.2 Testbench
+        10 ukey * 1000 text for functional. 2 ukey * 3 text for timing.
+
+
+    3.3 Fuctional simulation
+        screenshots and explanation.
+        report number of cycles for key_exp, enc, dec here.
+
+    3.4 Timing simulation
+        screenshots and explanation.
+
+4. Summary
+    report cycles, highest freq, utilization, test cases
