@@ -91,11 +91,12 @@ begin
 	  ---Reading data is asynchronous, rd = MEM[addr:addr+4].
 			data_mem <= (OTHERS => std_logic_vector(TO_UNSIGNED(0, 32)));
 	  elsif rising_edge(clk) then 
-
 			if we = '1' then
 				data_mem(TO_INTEGER(unsigned(addr(6 downto 0)))) <= wd;
 			end if;
 	  end if;
+	  
+--	  rd <= data_mem(TO_INTEGER(unsigned(addr(6 downto 0))));
 	end process;
 	
 rd <= data_mem(TO_INTEGER(unsigned(addr(6 downto 0))));

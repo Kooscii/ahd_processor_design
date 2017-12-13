@@ -67,6 +67,10 @@ begin
 --    reg(0) <= STD_LOGIC_VECTOR( TO_UNSIGNED(0, 32));
     -- r1 always be 1 and read-only
 --    reg(1) <= STD_LOGIC_VECTOR( TO_UNSIGNED(1, 32));
+
+--    rd1 <= reg( TO_INTEGER( unsigned(rs)));
+--    rd2 <= reg( TO_INTEGER( unsigned(rt)));
+
 end process;
 
 rd1 <= reg( TO_INTEGER( unsigned(rs)));

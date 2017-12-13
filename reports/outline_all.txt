@@ -69,7 +69,6 @@
     3.2 Testbench
         10 ukey * 1000 text for functional. 2 ukey * 3 text for timing.
 
-
     3.3 Fuctional simulation
         screenshots and explanation.
         report number of cycles for key_exp, enc, dec here.

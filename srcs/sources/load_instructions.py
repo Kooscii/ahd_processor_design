@@ -150,10 +150,13 @@ with open('ins_mem.vhd', 'w') as f:
         i += 1
     f.write(inst_mem[i])
     
-    for h in inst_hex[:-1]:
-        f.write('\t\tx"%s",\n'%h)
+    f.write('\t')
+    for l, h in enumerate(inst_hex[:-1], 1):
+        f.write('x"%s",'%h)
+        if l%2**8 == 0:
+            f.write('\n\t')
         print('\t\tx"%s",'%h)
-    f.write('\t\tx"%s"\n'%inst_hex[-1])
+    f.write('x"%s"\n'%inst_hex[-1])
     print('\t\tx"%s"'%h)
 
     while '<<< end <<<' not in inst_mem[i]:
