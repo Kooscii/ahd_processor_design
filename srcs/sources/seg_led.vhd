@@ -45,18 +45,18 @@ end seg_led;
 architecture Behavioral of seg_led is
 
     type type_segcode is array (0 to 15) of std_logic_vector (6 downto 0);
-    signal seg_code : type_segcode := (
+    constant seg_code : type_segcode := (
         "1000000", "1111001", "0100100", "0110000",
         "0011001", "0010010", "0000010", "1111000",
         "0000000", "0010000", "0001000", "0000011",
         "1000110", "0100001", "0000110", "0001110");
         
     type type_ancode is array (0 to 7) of std_logic_vector (7 downto 0);
-    signal an_code : type_ancode := (
+    constant an_code : type_ancode := (
         "11111110", "11111101", "11111011", "11110111",
         "11101111", "11011111", "10111111", "01111111");
     
-    signal i : integer := 0;
+    signal i : integer := 7;
 begin
     
     process (clk, rst)
@@ -64,15 +64,15 @@ begin
     begin
         if rst = '1' then
             t := 0;
-            i <= 0;
+            i <= 7;
         elsif rising_edge(clk) then
             t := t + 1;
-            if t > 10000 then      -- refresh rate 100Hz
+            if t = 1 then      -- refresh rate 100Hz
                 t := 0;
-                if i = 7 then
-                    i <= 0;
+                if i = 0 then
+                    i <= 7;
                 else
-                    i <= i + 1;
+                    i <= i - 1;
                 end if;
             end if;
         end if;

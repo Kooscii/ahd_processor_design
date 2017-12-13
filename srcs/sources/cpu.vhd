@@ -172,6 +172,7 @@ architecture Behavioral of cpu is
     
     -- data memory
     signal mem_rd : std_logic_vector (31 downto 0);  
+    signal mem_addr : std_logic_vector (31 downto 0);
     
     -- btn & sw debouncing
     signal r31_raw_btn_sw : std_logic_vector (31 downto 0);
@@ -320,13 +321,14 @@ begin
     U_sign_ext : sign_ext
         port map ( imm32 => imm_sign_ext,
                    imm16 => inst_imm);
-                   
+    
+    mem_addr <= std_logic_vector(signed(reg_rd1)+signed(imm_sign_ext));
     U_data_mem : data_mem
         port map ( rd => mem_rd,
                    clk => clk,
                    rst => rst_sync,
                    we => ctrl_sw,
-                   addr => alu_result,
+                   addr => mem_addr,
                    wd => reg_rd2);
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
