@@ -50,13 +50,13 @@
         2.3.2 Testbench
             Idealy we should do random cases testbench for each instruction to verify the processor, but no one did it. So here we report how we set up testbench for sample code1&2 provided in report part 1.
 
-        2.2.3 Functional simulation
+        2.3.3 Functional simulation
             screenshot and explain
 
-        2.2.4 Timing simulation
+        2.3.4 Timing simulation
             screenshot and explain
 
-        2.2.5 Analysis
+        2.3.5 Analysis
             crtical path delay and figure out which path is it
 
 3. RC5 Implementation
