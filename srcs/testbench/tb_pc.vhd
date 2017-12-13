@@ -84,13 +84,13 @@ begin
         branch <= '1';
         condi <= '1';
         for k in 0 to 1000 loop
-        
-            uniform(seed1, seed2, rand);
+            -- generate a random 16-bit signed vector in range [-2**15, 2**15)
+            uniform(seed1, seed2, rand);        
             offset <= std_logic_vector(TO_SIGNED(integer(trunc(rand*65536.0))-32768, 32));
+            -- pc <= pc + 4
             pc <= unsigned(pc_next) + 4;
-            
             wait for clk_period; 
-            
+            -- check if pc_next == pc + 4 + offset<<2
             assert pc_next = std_logic_vector(signed(pc)+(signed(offset) sll 2))
                 report "Wrong pc"
                     severity failure;

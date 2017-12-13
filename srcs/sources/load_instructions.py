@@ -156,7 +156,7 @@ with open('ins_mem.vhd', 'w') as f:
         if l%2**8 == 0:
             f.write('\n\t')
         print('\t\tx"%s",'%h)
-    f.write('\t\tx"%s"\n'%inst_hex[-1])
+    f.write('x"%s"\n'%inst_hex[-1])
     print('\t\tx"%s"'%h)
 
     while '<<< end <<<' not in inst_mem[i]:
