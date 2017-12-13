@@ -67,14 +67,13 @@ type DATA_MEMORY is array(0 to 127) of std_logic_vector(31 downto 0);
 -------------------------------------------------------
 ----			ASSIGN DATA MEMORY TO SIGNAL			   ----
 -------------------------------------------------------
-signal data_mem : DATA_MEMORY;
+signal data_mem : DATA_MEMORY := (others=>std_logic_vector(TO_UNSIGNED(0, 32)));
 
 -------------------------------------------------------
 ----			INTERNAL DECLARATION						   ----
 -------------------------------------------------------
 ---Yiren DAI(yd1257)'s comments and questions:
 ---I created this signal to receive the 8 downto 2 (7 digits) from addr
-signal sig_addr : std_logic_vector(6 downto 0);
 
 begin
 
@@ -83,7 +82,6 @@ begin
 ---  to addr(8 downto 2)
 ---2)Fengyang taught me why I need (8 downto 2) but NOT (6 downto 0), I am more 
 ---  clear now but still NOT 100% understand
-sig_addr <= addr(6 downto 0);
 
    
 	process (clk, rst)
@@ -91,16 +89,16 @@ sig_addr <= addr(6 downto 0);
 	  ---Reset all to 0x0 when rst is HIGH
 	  if (rst = '1')  then
 	  ---Reading data is asynchronous, rd = MEM[addr:addr+4].
-			data_mem(0 to 127) <= (OTHERS => std_logic_vector(TO_UNSIGNED(0, 32)));
+			data_mem <= (OTHERS => std_logic_vector(TO_UNSIGNED(0, 32)));
 	  elsif rising_edge(clk) then 
 
-			if we = '1' and TO_INTEGER(unsigned(sig_addr)) < 128 then
-				data_mem(TO_INTEGER(unsigned(sig_addr))) <= wd;
+			if we = '1' then
+				data_mem(TO_INTEGER(unsigned(addr(6 downto 0)))) <= wd;
 			end if;
 	  end if;
 	end process;
 	
-rd <= data_mem(TO_INTEGER(unsigned(sig_addr)));
+rd <= data_mem(TO_INTEGER(unsigned(addr(6 downto 0))));
 	
 end Behavioral;
 
