@@ -36,7 +36,7 @@
                 Make the screenshots larger and clearer!
 
 
-            2.2.1.5 Analysis
+            2.2.1.5 Timing Analysis
                 crtical path delay, latency, propagation delay
 
         2.2.2 component2
