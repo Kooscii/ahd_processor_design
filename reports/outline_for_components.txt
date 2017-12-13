@@ -1,4 +1,4 @@
-1 component
+1 component name
     contributor: netid
 
     1.1 Implementation
