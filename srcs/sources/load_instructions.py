@@ -66,7 +66,7 @@ for line in asm_code:
 # print(labl2addr)
 
 # compiling
-inst_dec = [2**32-1 for _ in xrange(512)]
+inst_dec = [2**32-1 for _ in xrange(2048)]
 for no, inst in enumerate(instructions):
         op = decode[inst[0]]['op']
 
