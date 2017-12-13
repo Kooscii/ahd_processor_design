@@ -58,7 +58,7 @@ begin
     if (rst = '1') then 
         reg(0 to 30) <= (OTHERS => std_logic_vector( TO_UNSIGNED(0, 32)));
     elsif rising_edge(clk) then
-        if we = '1' and TO_INTEGER( unsigned(rd)) < 31 then -- and TO_INTEGER( unsigned(rd)) > 1 then 
+        if we = '1' then -- and TO_INTEGER( unsigned(rd)) > 1 then 
             reg( TO_INTEGER( unsigned(rd))) <= wd;
         end if;
     end if;

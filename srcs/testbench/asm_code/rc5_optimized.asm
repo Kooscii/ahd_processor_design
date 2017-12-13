@@ -14,11 +14,11 @@
 #       r27 <- 16 MSB mask 0xffff0000
 #       r26 <- rotate mask 0x0000001f
 #       r25 <- 16 LSB mask 0x0000ffff
-#       r24 <- btn[4] mask 0x00100000
-#       r23 <- btn[3] mask 0x00080000
-#       r22 <- btn[2] mask 0x00040000  
-#       r21 <- btn[1] mask 0x00020000
-#       r20 <- btn[0] mask 0x00010000
+#       r24 <- btn[4] mask 0x00000010
+#       r23 <- btn[3] mask 0x00000008
+#       r22 <- btn[2] mask 0x00000004  
+#       r21 <- btn[1] mask 0x00000002
+#       r20 <- btn[0] mask 0x00000001
 #       
 #       for leds
 #       data[90] <- 1 << 0
@@ -32,11 +32,11 @@
 SUB r0 r0 r0            # r0 <- $zero
 ORI r1 r0 1             # r1 <- $one
 ORI r2 r0 -1            # r2 <- $minus_one
-SHL r20 r1 16           # r20 <- 0x00010000
-SHL r21 r20 1           # r21 <- 0x00020000
-SHL r22 r21 1           # r22 <- 0x00040000
-SHL r23 r22 1           # r23 <- 0x00080000
-SHL r24 r23 1           # r24 <- 0x00100000
+ORI r20 r1 0            # r20 <- 0x00000001
+SHL r21 r20 1           # r21 <- 0x00000002
+SHL r22 r21 1           # r22 <- 0x00000004
+SHL r23 r22 1           # r23 <- 0x00000008
+SHL r24 r23 1           # r24 <- 0x00000010
 ORI r25 r0 0xffff       
 SHR r25 r25 16          # r25 <- 0x0000ffff
 ORI r26 r0 0x001f       # r26 <- 0x0000001f
@@ -76,27 +76,32 @@ MAIN_LOOP:
 OR r30 r18 r19                  # diplay menu index
 
 CHECK_BTNL:
-AND r28 r22 r31
+SHR r28 r31 16
+AND r28 r28 r22 
 BNE r28 r22 CHECK_BTNR          # if not pressed, check next btn
 SUBI r19 r19 1                  # if pressed
 BNE r19 r0 1                   
 SUBI r19 r17 1                  # if index out of range, reset it
 OR r30 r18 r19                  # diplay menu index
-AND r28 r22 r31                 # wait release
-BEQ r28 r22 -2
+SHR r28 r31 16
+AND r28 r28 r22                 # wait release
+BEQ r28 r22 -3
 
 CHECK_BTNR:
-AND r28 r23 r31
+SHR r28 r31 16
+AND r28 r28 r23
 BNE r28 r23 CHECK_BTNC          # if not pressed, check next btn
 ADDI r19 r19 1                  # if pressed
 BNE r19 r17 1                   
 ADDI r19 r0 1                  # if index out of range, reset it
 OR r30 r18 r19                  # diplay menu index
-AND r28 r23 r31                 # wait release
-BEQ r28 r23 -2
+SHR r28 r31 16
+AND r28 r28 r23                 # wait release
+BEQ r28 r23 -3
 
 CHECK_BTNC:
-AND r28 r20 r31
+SHR r28 r31 16
+AND r28 r28 r20
 BNE r28 r20 CHECK_END           # if not pressed, check next btn
 
 ORI r10 r0 1
@@ -158,12 +163,14 @@ OR r30 r11 r10                  # display r11&r10 (switches&current_value)
 LW r29 r3 90                    # turn on led(i)
 
 # wait until preivous pressed btn is released
-AND r28 r17 r31                 # get state of preivous pressed btn
-BNE r28 r0 -2                   # loop
+SHR r28 r31 16
+AND r28 r28 r17                 # get state of preivous pressed btn
+BNE r28 r0 -3                   # loop
 ORI r17 r0 0                    # no btn being pressed
 
 UKEY_CHECK_BTNL:
-AND r28 r22 r31
+SHR r28 r31 16
+AND r28 r28 r22
 BNE r28 r22 UKEY_CHECK_BTNR     # if not pressed, check next btn
 BEQ r3 r13 1                    # if r3=7, skip r3+=1
 ADDI r3 r3 1             
@@ -171,7 +178,8 @@ ORI r17 r22 0                   # set previous pressed btn to btnL
 JMP LOOP_UKEY_INPUT
 
 UKEY_CHECK_BTNR:
-AND r28 r23 r31
+SHR r28 r31 16
+AND r28 r28 r23
 BNE r28 r23 UKEY_CHECK_BTNC     # if not pressed, check next btn
 BEQ r3 r0 1                     # if r3=0, skip r3-=1
 SUBI r3 r3 1             
@@ -179,7 +187,8 @@ ORI r17 r23 0                   # set previous pressed btn to btnR
 JMP LOOP_UKEY_INPUT
 
 UKEY_CHECK_BTNC:
-AND r28 r20 r31
+SHR r28 r31 16
+AND r28 r28 r20
 BNE r28 r20 UKEY_CHECK_BTND     # if not pressed, check next btn
 AND r10 r25 r31                 # r10 <- switches
 SW r10 r3 60                    # data[60+i] <- r10
@@ -187,7 +196,8 @@ ORI r17 r20 0                   # set previous pressed btn to btnC
 JMP LOOP_UKEY_INPUT
 
 UKEY_CHECK_BTND:
-AND r28 r24 r31
+SHR r28 r31 16
+AND r28 r28 r24
 BNE r28 r24 UKEY_CHECK_END      # if not pressed, check next btn
 JMP UKEY_MERGE
 
@@ -235,12 +245,14 @@ OR r30 r11 r10                  # display r11&r10 (switches&current_value)
 LW r29 r3 90                    # turn on led(i)
 
 # wait until preivous pressed btn is released
-AND r28 r17 r31                 # get state of preivous pressed btn
-BNE r28 r0 -2                   # loop
+SHR r28 r31 16
+AND r28 r28 r17                 # get state of preivous pressed btn
+BNE r28 r0 -3                   # loop
 ORI r17 r0 0                    # no btn being pressed
 
 DIN_CHECK_BTNL:
-AND r28 r22 r31
+SHR r28 r31 16
+AND r28 r28 r22
 BNE r28 r22 DIN_CHECK_BTNR      # if not pressed, check next btn
 BEQ r3 r13 1                    # if r3=3, skip r3+=1
 ADDI r3 r3 1             
@@ -248,7 +260,8 @@ ORI r17 r22 0                   # set previous pressed btn to btnL
 JMP LOOP_DIN_INPUT
 
 DIN_CHECK_BTNR:
-AND r28 r23 r31
+SHR r28 r31 16
+AND r28 r28 r23
 BNE r28 r23 DIN_CHECK_BTNC      # if not pressed, check next btn
 BEQ r3 r0 1                     # if r3=0, skip r3-=1
 SUBI r3 r3 1             
@@ -256,7 +269,8 @@ ORI r17 r23 0                   # set previous pressed btn to btnR
 JMP LOOP_DIN_INPUT
 
 DIN_CHECK_BTNC:
-AND r28 r20 r31
+SHR r28 r31 16
+AND r28 r28 r20
 BNE r28 r20 DIN_CHECK_BTND      # if not pressed, check next btn
 AND r10 r25 r31                 # r10 <- switches
 SW r10 r3 70                    # data[70+i] <- r10
@@ -264,7 +278,8 @@ ORI r17 r20 0                   # set previous pressed btn to btnC
 JMP LOOP_DIN_INPUT
 
 DIN_CHECK_BTND:
-AND r28 r24 r31
+SHR r28 r31 16
+AND r28 r28 r24
 BNE r28 r24 DIN_CHECK_END       # if not pressed, check next btn
 JMP DIN_MERGE
 
@@ -341,36 +356,215 @@ ORI r9 r0 0                     # B
 
 LOOP_SKEY:
 # calculate A
-ADD r8 r8 r9                    # r8 <- A = A+B
+ADD r6 r8 r9                    # r6 <- A+B
 LW r7 r3 0                      # r7 <- S[i]
-ADD r7 r7 r8                    # r7 <- S[i] = S[i] + A + B
+ADD r7 r7 r6                    # r7 <- S[i] = S[i] + A + B
 # rotate left
 SHL r11 r7 3                    # r11 <- r7 << 3 (29 MSB)
 SHR r10 r7 29                   # r10 <- r7 >> 29 (3 LSB)
 OR r8 r11 r10                   # r8 <- A = rotl(S[i] + A + B, 3)
 SW r8 r3 0                      # S[i] = A
 # calculate B
-ADD r9 r8 r9                    # r9 <- B = A+B
+ADD r6 r8 r9                    # r6 <- A+B
 LW r7 r4 26                     # r7 <- L[j]
-ADD r7 r7 r9                    # r7 <- L[j] = L[j] + A + B
-# rotate left
-ORI r6 r0 0                     # rotation counter
-AND r16 r26 r9                  # A + B: 5 LSB rotation bits
-OR r11 r0 r7
-BEQ r0 r0 2
-SHL r11 r11 1                   # r11 <- r11 << 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < rotation bits
+ADD r7 r7 r6                    # r7 <- L[j] = L[j] + A + B
 
-ORI r16 r0 32                   # total rotation bits = 32
-OR r10 r0 r7
-BEQ r0 r0 2
-SHR r10 r10 1                   # r10 <- r10 >> 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < 32
+# left rotate r7 by r6
+# start from xxxxx [0, 31] 
+AND r12 r24 r6                   
+BEQ r12 r24 ROT16_KEY            # 1xxxx, goto [16, 31] 
+ROT0_KEY:                       # 0xxxx [0, 15]
+AND r12 r23 r6    
+BEQ r12 r23 ROT8_KEY             # 01xxx, goto [8, 15]
+AND r12 r22 r6
+BEQ r12 r22 ROT4_KEY             # 001xx, goto [4, 7]
+AND r12 r21 r6
+BEQ r12 r21 ROT2_KEY             # 0001x, goto [2, 3]
+AND r12 r20 r6
+BEQ r12 r20 ROT1_KEY             # 00001, goto [1]
+SHL r11 r7 0                    # 00001 [1]
+SHR r10 r7 32             
+JMP ROT_MERGE_KEY               # 00000 [0]
+ROT1_KEY:                       
+SHL r11 r7 1                    # 00001 [1]
+SHR r10 r7 31                    
+JMP ROT_MERGE_KEY               
+ROT2_KEY:                       # 00001 [2, 3]
+AND r12 r20 r6                   
+BEQ r12 r20 ROT3_KEY             # 00011, goto [3]
+SHL r11 r7 2                    # 00010 [2]
+SHR r10 r7 30      
+JMP ROT_MERGE_KEY               
+ROT3_KEY:
+SHL r11 r7 3                    # 00011 [3]
+SHR r10 r7 29      
+JMP ROT_MERGE_KEY              
+ROT4_KEY:                       # 001xx [4, 7]
+AND r12 r21 r6                   
+BEQ r12 r21 ROT6_KEY             # 0011x, goto [6, 7]
+AND r12 r20 r6                   
+BEQ r12 r20 ROT5_KEY             # 00101, goto [5]
+SHL r11 r7 4                    # 00100 [4]
+SHR r10 r7 28  
+JMP ROT_MERGE_KEY                
+ROT5_KEY:                       # 00101 [5]
+SHL r11 r7 5                    # 00100 [4]
+SHR r10 r7 27  
+JMP ROT_MERGE_KEY       
+ROT6_KEY:
+AND r12 r20 r6                   
+BEQ r12 r20 ROT7_KEY             # 00111, goto [7]
+SHL r11 r7 6                    # 00110 [6]
+SHR r10 r7 26   
+JMP ROT_MERGE_KEY      
+ROT7_KEY:
+SHL r11 r7 7                    # 00111 [7]
+SHR r10 r7 25     
+JMP ROT_MERGE_KEY    
+ROT8_KEY:                       # 01xxx [8, 15]
+AND r12 r22 r6
+BEQ r12 r22 ROT12_KEY            # 011xx, goto [12, 15]
+AND r12 r21 r6
+BEQ r12 r21 ROT10_KEY            # 0101x, goto [10, 11]
+AND r12 r20 r6
+BEQ r12 r20 ROT9_KEY             # 01001, goto [9]
+SHL r11 r7 8                    # 01000 [8]
+SHR r10 r7 24   
+JMP ROT_MERGE_KEY                 
+ROT9_KEY:
+SHL r11 r7 9                    # 01001 [9]
+SHR r10 r7 23   
+JMP ROT_MERGE_KEY           
+ROT10_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT11_KEY
+SHL r11 r7 10                    # 01001 [9]
+SHR r10 r7 22   
+JMP ROT_MERGE_KEY   
+ROT11_KEY:
+SHL r11 r7 11                    # 01001 [9]
+SHR r10 r7 21   
+JMP ROT_MERGE_KEY   
+ROT12_KEY:
+AND r12 r21 r6
+BEQ r12 r21 ROT14_KEY
+AND r12 r20 r6
+BEQ r12 r20 ROT13_KEY
+SHL r11 r7 12                    # 01001 [9]
+SHR r10 r7 20   
+JMP ROT_MERGE_KEY   
+ROT13_KEY:
+SHL r11 r7 13                    # 01001 [9]
+SHR r10 r7 19   
+JMP ROT_MERGE_KEY   
+ROT14_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT15_KEY
+SHL r11 r7 14                    # 01001 [9]
+SHR r10 r7 18   
+JMP ROT_MERGE_KEY   
+ROT15_KEY:
+SHL r11 r7 15                    # 01001 [9]
+SHR r10 r7 17   
+JMP ROT_MERGE_KEY   
+ROT16_KEY:
+AND r12 r23 r6
+BEQ r12 r23 ROT24_KEY
+AND r12 r22 r6
+BEQ r12 r22 ROT20_KEY
+AND r12 r21 r6
+BEQ r12 r21 ROT18_KEY
+AND r12 r20 r6
+BEQ r12 r20 ROT17_KEY
+SHL r11 r7 16                    # 01001 [9]
+SHR r10 r7 16   
+JMP ROT_MERGE_KEY   
+ROT17_KEY:
+SHL r11 r7 17                    # 01001 [9]
+SHR r10 r7 15   
+JMP ROT_MERGE_KEY   
+ROT18_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT19_KEY
+SHL r11 r7 18                    # 01001 [9]
+SHR r10 r7 14   
+JMP ROT_MERGE_KEY  
+ROT19_KEY:
+SHL r11 r7 19                    # 01001 [9]
+SHR r10 r7 13   
+JMP ROT_MERGE_KEY   
+ROT20_KEY:
+AND r12 r21 r6
+BEQ r12 r21 ROT22_KEY
+AND r12 r20 r6
+BEQ r12 r20 ROT21_KEY
+SHL r11 r7 20                    # 01001 [9]
+SHR r10 r7 12   
+JMP ROT_MERGE_KEY   
+ROT21_KEY:
+SHL r11 r7 21                    # 01001 [9]
+SHR r10 r7 11   
+JMP ROT_MERGE_KEY   
+ROT22_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT23_KEY
+SHL r11 r7 22                    # 01001 [9]
+SHR r10 r7 10   
+JMP ROT_MERGE_KEY   
+ROT23_KEY:
+SHL r11 r7 23                    # 01001 [9]
+SHR r10 r7 9   
+JMP ROT_MERGE_KEY   
+ROT24_KEY:
+AND r12 r22 r6
+BEQ r12 r22 ROT28_KEY
+AND r12 r21 r6
+BEQ r12 r21 ROT26_KEY
+AND r12 r20 r6
+BEQ r12 r20 ROT25_KEY
+SHL r11 r7 24                    # 01001 [9]
+SHR r10 r7 8   
+JMP ROT_MERGE_KEY   
+ROT25_KEY:
+SHL r11 r7 25                    # 01001 [9]
+SHR r10 r7 7   
+JMP ROT_MERGE_KEY   
+ROT26_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT27_KEY
+SHL r11 r7 26                    # 01001 [9]
+SHR r10 r7 6   
+JMP ROT_MERGE_KEY   
+ROT27_KEY:
+SHL r11 r7 27                    # 01001 [9]
+SHR r10 r7 5   
+JMP ROT_MERGE_KEY   
+ROT28_KEY:
+AND r12 r21 r6
+BEQ r12 r21 ROT30_KEY
+AND r12 r20 r6
+BEQ r12 r20 ROT29_KEY
+SHL r11 r7 28                    # 01001 [9]
+SHR r10 r7 4   
+JMP ROT_MERGE_KEY   
+ROT29_KEY:
+SHL r11 r7 29                    # 01001 [9]
+SHR r10 r7 3   
+JMP ROT_MERGE_KEY   
+ROT30_KEY:
+AND r12 r20 r6
+BEQ r12 r20 ROT31_KEY
+SHL r11 r7 30                    # 01001 [9]
+SHR r10 r7 2   
+JMP ROT_MERGE_KEY   
+ROT31_KEY:
+SHL r11 r7 31                    # 01001 [9]
+SHR r10 r7 1
 
+ROT_MERGE_KEY:
 OR r9 r11 r10                   # r9 <- B = rotl(L[j] + A + B, A+B)
 SW r9 r4 26                     # L[j] = B
+
 # increment
 ADDI r3 r3 1                    # i += 1
 ADDI r4 r4 1                    # j += 1
@@ -409,60 +603,406 @@ ADDI r5 r4 1                    # r5 <- 2*i+1
 
 # calculate A
 # XOR operation
-AND r11 r8 r9                   # r11 <- A and B
-NOR r11 r11 r0                  # r11 <- A nand B
-ORI r10 r11 0                   # r10 <- A nand B
-AND r11 r11 r9                  # r11 <- B and (A nand B)
-NOR r11 r11 r0                  # r11 <- B nand (A nand B))
-AND r10 r10 r8                  # r10 <- A and (A nand B)
-NOR r10 r10 r0                  # r10 <- A nand (A nand B))
-AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
-NOR r10 r10 r0                  # r10 <- (B nand (A nand B))) nand (A nand (A nand B)))
-OR r11 r10 r10                  # r11 <- r10
+NOR r11 r8 r9                   # r11 <- A nor B
+AND r10 r8 r9                   # r11 <- A and B
+NOR r7 r10 r11                  # r7  <- A^B
 
-ORI r6 r0 0                     # rotation counter
-AND r16 r26 r9                  # B: 5 LSB rotation bits
-BEQ r0 r0 2
-SHL r11 r11 1                   # r11 <- r11 << 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < rotation bits
+# left rotate r7 by r9
+# start from xxxxx [0, 31] 
+AND r12 r24 r9                   
+BEQ r12 r24 ROT16_ENCA            # 1xxxx, goto [16, 31] 
+ROT0_ENCA:                       # 0xxxx [0, 15]
+AND r12 r23 r9    
+BEQ r12 r23 ROT8_ENCA             # 01xxx, goto [8, 15]
+AND r12 r22 r9
+BEQ r12 r22 ROT4_ENCA             # 001xx, goto [4, 7]
+AND r12 r21 r9
+BEQ r12 r21 ROT2_ENCA             # 0001x, goto [2, 3]
+AND r12 r20 r9
+BEQ r12 r20 ROT1_ENCA             # 00001, goto [1]
+SHL r11 r7 0                    # 00001 [1]
+SHR r10 r7 32             
+JMP ROT_MERGE_ENCA               # 00000 [0]
+ROT1_ENCA:                       
+SHL r11 r7 1                    # 00001 [1]
+SHR r10 r7 31                    
+JMP ROT_MERGE_ENCA               
+ROT2_ENCA:                       # 00001 [2, 3]
+AND r12 r20 r9                   
+BEQ r12 r20 ROT3_ENCA             # 00011, goto [3]
+SHL r11 r7 2                    # 00010 [2]
+SHR r10 r7 30      
+JMP ROT_MERGE_ENCA               
+ROT3_ENCA:
+SHL r11 r7 3                    # 00011 [3]
+SHR r10 r7 29      
+JMP ROT_MERGE_ENCA              
+ROT4_ENCA:                       # 001xx [4, 7]
+AND r12 r21 r9                   
+BEQ r12 r21 ROT6_ENCA             # 0011x, goto [6, 7]
+AND r12 r20 r9                   
+BEQ r12 r20 ROT5_ENCA             # 00101, goto [5]
+SHL r11 r7 4                    # 00100 [4]
+SHR r10 r7 28  
+JMP ROT_MERGE_ENCA                
+ROT5_ENCA:                       # 00101 [5]
+SHL r11 r7 5                    # 00100 [4]
+SHR r10 r7 27  
+JMP ROT_MERGE_ENCA       
+ROT6_ENCA:
+AND r12 r20 r9                   
+BEQ r12 r20 ROT7_ENCA             # 00111, goto [7]
+SHL r11 r7 6                    # 00110 [6]
+SHR r10 r7 26   
+JMP ROT_MERGE_ENCA      
+ROT7_ENCA:
+SHL r11 r7 7                    # 00111 [7]
+SHR r10 r7 25     
+JMP ROT_MERGE_ENCA    
+ROT8_ENCA:                       # 01xxx [8, 15]
+AND r12 r22 r9
+BEQ r12 r22 ROT12_ENCA            # 011xx, goto [12, 15]
+AND r12 r21 r9
+BEQ r12 r21 ROT10_ENCA            # 0101x, goto [10, 11]
+AND r12 r20 r9
+BEQ r12 r20 ROT9_ENCA             # 01001, goto [9]
+SHL r11 r7 8                    # 01000 [8]
+SHR r10 r7 24   
+JMP ROT_MERGE_ENCA                 
+ROT9_ENCA:
+SHL r11 r7 9                    # 01001 [9]
+SHR r10 r7 23   
+JMP ROT_MERGE_ENCA           
+ROT10_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT11_ENCA
+SHL r11 r7 10                    # 01001 [9]
+SHR r10 r7 22   
+JMP ROT_MERGE_ENCA   
+ROT11_ENCA:
+SHL r11 r7 11                    # 01001 [9]
+SHR r10 r7 21   
+JMP ROT_MERGE_ENCA   
+ROT12_ENCA:
+AND r12 r21 r9
+BEQ r12 r21 ROT14_ENCA
+AND r12 r20 r9
+BEQ r12 r20 ROT13_ENCA
+SHL r11 r7 12                    # 01001 [9]
+SHR r10 r7 20   
+JMP ROT_MERGE_ENCA   
+ROT13_ENCA:
+SHL r11 r7 13                    # 01001 [9]
+SHR r10 r7 19   
+JMP ROT_MERGE_ENCA   
+ROT14_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT15_ENCA
+SHL r11 r7 14                    # 01001 [9]
+SHR r10 r7 18   
+JMP ROT_MERGE_ENCA   
+ROT15_ENCA:
+SHL r11 r7 15                    # 01001 [9]
+SHR r10 r7 17   
+JMP ROT_MERGE_ENCA   
+ROT16_ENCA:
+AND r12 r23 r9
+BEQ r12 r23 ROT24_ENCA
+AND r12 r22 r9
+BEQ r12 r22 ROT20_ENCA
+AND r12 r21 r9
+BEQ r12 r21 ROT18_ENCA
+AND r12 r20 r9
+BEQ r12 r20 ROT17_ENCA
+SHL r11 r7 16                    # 01001 [9]
+SHR r10 r7 16   
+JMP ROT_MERGE_ENCA   
+ROT17_ENCA:
+SHL r11 r7 17                    # 01001 [9]
+SHR r10 r7 15   
+JMP ROT_MERGE_ENCA   
+ROT18_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT19_ENCA
+SHL r11 r7 18                    # 01001 [9]
+SHR r10 r7 14   
+JMP ROT_MERGE_ENCA  
+ROT19_ENCA:
+SHL r11 r7 19                    # 01001 [9]
+SHR r10 r7 13   
+JMP ROT_MERGE_ENCA   
+ROT20_ENCA:
+AND r12 r21 r9
+BEQ r12 r21 ROT22_ENCA
+AND r12 r20 r9
+BEQ r12 r20 ROT21_ENCA
+SHL r11 r7 20                    # 01001 [9]
+SHR r10 r7 12   
+JMP ROT_MERGE_ENCA   
+ROT21_ENCA:
+SHL r11 r7 21                    # 01001 [9]
+SHR r10 r7 11   
+JMP ROT_MERGE_ENCA   
+ROT22_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT23_ENCA
+SHL r11 r7 22                    # 01001 [9]
+SHR r10 r7 10   
+JMP ROT_MERGE_ENCA   
+ROT23_ENCA:
+SHL r11 r7 23                    # 01001 [9]
+SHR r10 r7 9   
+JMP ROT_MERGE_ENCA   
+ROT24_ENCA:
+AND r12 r22 r9
+BEQ r12 r22 ROT28_ENCA
+AND r12 r21 r9
+BEQ r12 r21 ROT26_ENCA
+AND r12 r20 r9
+BEQ r12 r20 ROT25_ENCA
+SHL r11 r7 24                    # 01001 [9]
+SHR r10 r7 8   
+JMP ROT_MERGE_ENCA   
+ROT25_ENCA:
+SHL r11 r7 25                    # 01001 [9]
+SHR r10 r7 7   
+JMP ROT_MERGE_ENCA   
+ROT26_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT27_ENCA
+SHL r11 r7 26                    # 01001 [9]
+SHR r10 r7 6   
+JMP ROT_MERGE_ENCA   
+ROT27_ENCA:
+SHL r11 r7 27                    # 01001 [9]
+SHR r10 r7 5   
+JMP ROT_MERGE_ENCA   
+ROT28_ENCA:
+AND r12 r21 r9
+BEQ r12 r21 ROT30_ENCA
+AND r12 r20 r9
+BEQ r12 r20 ROT29_ENCA
+SHL r11 r7 28                    # 01001 [9]
+SHR r10 r7 4   
+JMP ROT_MERGE_ENCA   
+ROT29_ENCA:
+SHL r11 r7 29                    # 01001 [9]
+SHR r10 r7 3   
+JMP ROT_MERGE_ENCA   
+ROT30_ENCA:
+AND r12 r20 r9
+BEQ r12 r20 ROT31_ENCA
+SHL r11 r7 30                    # 01001 [9]
+SHR r10 r7 2   
+JMP ROT_MERGE_ENCA   
+ROT31_ENCA:
+SHL r11 r7 31                    # 01001 [9]
+SHR r10 r7 1
 
-ORI r16 r0 32                   # total rotation bits = 32
-BEQ r0 r0 2
-SHR r10 r10 1                   # r10 <- r10 >> 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < 32
-
+ROT_MERGE_ENCA:
 OR r10 r11 r10                  # r10 <- rotl(A^B, B)
 LW r7 r4 0                      # r7 <- S[i*2]
 ADD r8 r10 r7                   # r8 <- A = ROTL(A^B, B) + S[i*2]
 
 # calculate B
 # XOR operation
-AND r11 r8 r9                   # r11 <- A and B
-NOR r11 r11 r0                  # r11 <- A nand B
-ORI r10 r11 0                   # r10 <- A nand B
-AND r11 r11 r9                  # r11 <- B and (A nand B)
-NOR r11 r11 r0                  # r11 <- B nand (A nand B))
-AND r10 r10 r8                  # r10 <- A and (A nand B)
-NOR r10 r10 r0                  # r10 <- A nand (A nand B))
-AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
-NOR r10 r10 r0                  # r10 <- (B nand (A nand B))) nand (A nand (A nand B)))
-OR r11 r10 r10                  # r11 <- r10
+NOR r11 r8 r9                   # r11 <- A nor B
+AND r10 r8 r9                   # r11 <- A and B
+NOR r7 r10 r11                  # r7  <- A^B
 
-ORI r6 r0 0                     # rotation counter
-AND r16 r26 r8                  # A: 5 LSB rotation bits
-BEQ r0 r0 2
-SHL r11 r11 1                   # r11 <- r11 << 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < rotation bits
+# left rotate r7 by r8
+# start from xxxxx [0, 31] 
+AND r12 r24 r8                   
+BEQ r12 r24 ROT16_ENCB            # 1xxxx, goto [16, 31] 
+ROT0_ENCB:                       # 0xxxx [0, 15]
+AND r12 r23 r8    
+BEQ r12 r23 ROT8_ENCB             # 01xxx, goto [8, 15]
+AND r12 r22 r8
+BEQ r12 r22 ROT4_ENCB             # 001xx, goto [4, 7]
+AND r12 r21 r8
+BEQ r12 r21 ROT2_ENCB             # 0001x, goto [2, 3]
+AND r12 r20 r8
+BEQ r12 r20 ROT1_ENCB             # 00001, goto [1]
+SHL r11 r7 0                    # 00001 [1]
+SHR r10 r7 32             
+JMP ROT_MERGE_ENCB               # 00000 [0]
+ROT1_ENCB:                       
+SHL r11 r7 1                    # 00001 [1]
+SHR r10 r7 31                    
+JMP ROT_MERGE_ENCB               
+ROT2_ENCB:                       # 00001 [2, 3]
+AND r12 r20 r8                   
+BEQ r12 r20 ROT3_ENCB             # 00011, goto [3]
+SHL r11 r7 2                    # 00010 [2]
+SHR r10 r7 30      
+JMP ROT_MERGE_ENCB               
+ROT3_ENCB:
+SHL r11 r7 3                    # 00011 [3]
+SHR r10 r7 29      
+JMP ROT_MERGE_ENCB              
+ROT4_ENCB:                       # 001xx [4, 7]
+AND r12 r21 r8                   
+BEQ r12 r21 ROT6_ENCB             # 0011x, goto [6, 7]
+AND r12 r20 r8                   
+BEQ r12 r20 ROT5_ENCB             # 00101, goto [5]
+SHL r11 r7 4                    # 00100 [4]
+SHR r10 r7 28  
+JMP ROT_MERGE_ENCB                
+ROT5_ENCB:                       # 00101 [5]
+SHL r11 r7 5                    # 00100 [4]
+SHR r10 r7 27  
+JMP ROT_MERGE_ENCB       
+ROT6_ENCB:
+AND r12 r20 r8                   
+BEQ r12 r20 ROT7_ENCB             # 00111, goto [7]
+SHL r11 r7 6                    # 00110 [6]
+SHR r10 r7 26   
+JMP ROT_MERGE_ENCB      
+ROT7_ENCB:
+SHL r11 r7 7                    # 00111 [7]
+SHR r10 r7 25     
+JMP ROT_MERGE_ENCB    
+ROT8_ENCB:                       # 01xxx [8, 15]
+AND r12 r22 r8
+BEQ r12 r22 ROT12_ENCB            # 011xx, goto [12, 15]
+AND r12 r21 r8
+BEQ r12 r21 ROT10_ENCB            # 0101x, goto [10, 11]
+AND r12 r20 r8
+BEQ r12 r20 ROT9_ENCB             # 01001, goto [9]
+SHL r11 r7 8                    # 01000 [8]
+SHR r10 r7 24   
+JMP ROT_MERGE_ENCB                 
+ROT9_ENCB:
+SHL r11 r7 9                    # 01001 [9]
+SHR r10 r7 23   
+JMP ROT_MERGE_ENCB           
+ROT10_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT11_ENCB
+SHL r11 r7 10                    # 01001 [9]
+SHR r10 r7 22   
+JMP ROT_MERGE_ENCB   
+ROT11_ENCB:
+SHL r11 r7 11                    # 01001 [9]
+SHR r10 r7 21   
+JMP ROT_MERGE_ENCB   
+ROT12_ENCB:
+AND r12 r21 r8
+BEQ r12 r21 ROT14_ENCB
+AND r12 r20 r8
+BEQ r12 r20 ROT13_ENCB
+SHL r11 r7 12                    # 01001 [9]
+SHR r10 r7 20   
+JMP ROT_MERGE_ENCB   
+ROT13_ENCB:
+SHL r11 r7 13                    # 01001 [9]
+SHR r10 r7 19   
+JMP ROT_MERGE_ENCB   
+ROT14_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT15_ENCB
+SHL r11 r7 14                    # 01001 [9]
+SHR r10 r7 18   
+JMP ROT_MERGE_ENCB   
+ROT15_ENCB:
+SHL r11 r7 15                    # 01001 [9]
+SHR r10 r7 17   
+JMP ROT_MERGE_ENCB   
+ROT16_ENCB:
+AND r12 r23 r8
+BEQ r12 r23 ROT24_ENCB
+AND r12 r22 r8
+BEQ r12 r22 ROT20_ENCB
+AND r12 r21 r8
+BEQ r12 r21 ROT18_ENCB
+AND r12 r20 r8
+BEQ r12 r20 ROT17_ENCB
+SHL r11 r7 16                    # 01001 [9]
+SHR r10 r7 16   
+JMP ROT_MERGE_ENCB   
+ROT17_ENCB:
+SHL r11 r7 17                    # 01001 [9]
+SHR r10 r7 15   
+JMP ROT_MERGE_ENCB   
+ROT18_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT19_ENCB
+SHL r11 r7 18                    # 01001 [9]
+SHR r10 r7 14   
+JMP ROT_MERGE_ENCB  
+ROT19_ENCB:
+SHL r11 r7 19                    # 01001 [9]
+SHR r10 r7 13   
+JMP ROT_MERGE_ENCB   
+ROT20_ENCB:
+AND r12 r21 r8
+BEQ r12 r21 ROT22_ENCB
+AND r12 r20 r8
+BEQ r12 r20 ROT21_ENCB
+SHL r11 r7 20                    # 01001 [9]
+SHR r10 r7 12   
+JMP ROT_MERGE_ENCB   
+ROT21_ENCB:
+SHL r11 r7 21                    # 01001 [9]
+SHR r10 r7 11   
+JMP ROT_MERGE_ENCB   
+ROT22_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT23_ENCB
+SHL r11 r7 22                    # 01001 [9]
+SHR r10 r7 10   
+JMP ROT_MERGE_ENCB   
+ROT23_ENCB:
+SHL r11 r7 23                    # 01001 [9]
+SHR r10 r7 9   
+JMP ROT_MERGE_ENCB   
+ROT24_ENCB:
+AND r12 r22 r8
+BEQ r12 r22 ROT28_ENCB
+AND r12 r21 r8
+BEQ r12 r21 ROT26_ENCB
+AND r12 r20 r8
+BEQ r12 r20 ROT25_ENCB
+SHL r11 r7 24                    # 01001 [9]
+SHR r10 r7 8   
+JMP ROT_MERGE_ENCB   
+ROT25_ENCB:
+SHL r11 r7 25                    # 01001 [9]
+SHR r10 r7 7   
+JMP ROT_MERGE_ENCB   
+ROT26_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT27_ENCB
+SHL r11 r7 26                    # 01001 [9]
+SHR r10 r7 6   
+JMP ROT_MERGE_ENCB   
+ROT27_ENCB:
+SHL r11 r7 27                    # 01001 [9]
+SHR r10 r7 5   
+JMP ROT_MERGE_ENCB   
+ROT28_ENCB:
+AND r12 r21 r8
+BEQ r12 r21 ROT30_ENCB
+AND r12 r20 r8
+BEQ r12 r20 ROT29_ENCB
+SHL r11 r7 28                    # 01001 [9]
+SHR r10 r7 4   
+JMP ROT_MERGE_ENCB   
+ROT29_ENCB:
+SHL r11 r7 29                    # 01001 [9]
+SHR r10 r7 3   
+JMP ROT_MERGE_ENCB   
+ROT30_ENCB:
+AND r12 r20 r8
+BEQ r12 r20 ROT31_ENCB
+SHL r11 r7 30                    # 01001 [9]
+SHR r10 r7 2   
+JMP ROT_MERGE_ENCB   
+ROT31_ENCB:
+SHL r11 r7 31                    # 01001 [9]
+SHR r10 r7 1
 
-ORI r16 r0 32                   # total rotation bits = 32
-BEQ r0 r0 2
-SHR r10 r10 1                   # r10 <- r10 >> 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < 32
-
+ROT_MERGE_ENCB:
 OR r10 r11 r10                  # r10 <- rotl(A^B, A)
 LW r7 r5 0                      # r7 <- S[i*2+1]
 ADD r9 r10 r7                   # r9 <- B = ROTL(A^B, A) + S[i*2+1]
@@ -482,21 +1022,24 @@ SHR r28 r31 16
 BNE r28 r0 -2                   # wait for all buttons being released
 
 ENC_CHECK_BTNL:
-AND r28 r22 r31
+SHR r28 r31 16
+AND r28 r28 r22
 BNE r28 r22 ENC_CHECK_BTNR      # if not pressed, check next btn
 LW r30 r0 31                    # display 16 MSB
 LW r29 r1 90                    # turn on led(1)
 
 
 ENC_CHECK_BTNR:
-AND r28 r23 r31
+SHR r28 r31 16
+AND r28 r28 r23
 BNE r28 r23 ENC_CHECK_BTND      # if not pressed, check next btn
 LW r30 r0 30                    # display 16 LSB
 LW r29 r0 90                    # turn on led(0)
 
 
 ENC_CHECK_BTND:
-AND r28 r24 r31
+SHR r28 r31 16
+AND r28 r28 r24
 BNE r28 r24 ENC_CHECK_BTNL       # if not pressed, check next btn
 JMP MAIN
              
@@ -518,65 +1061,411 @@ ADDI r5 r4 1                    # r5 <- 2*i+1
 
 # calculate B
 LW r7 r5 0                      # r7 <- S[i*2+1]
-SUB r10 r9 r7                   # r10 <- B - S[i*2+1]
-OR r11 r10 r10                  # r11 <- r10
+SUB r7 r9 r7                    # r7 <- B - S[i*2+1]
 
-ORI r6 r0 0                     # rotation counter
-AND r16 r26 r8                  # A: 5 LSB rotation bits
-BEQ r0 r0 2
-SHR r10 r10 1                   # r10 <- r10 >> 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < rotation bits
+# right rotate r7 by r8
+# start from xxxxx [0, 31] 
+AND r12 r24 r8                   
+BEQ r12 r24 ROT16_DECB            # 1xxxx, goto [16, 31] 
+ROT0_DECB:                       # 0xxxx [0, 15]
+AND r12 r23 r8    
+BEQ r12 r23 ROT8_DECB             # 01xxx, goto [8, 15]
+AND r12 r22 r8
+BEQ r12 r22 ROT4_DECB             # 001xx, goto [4, 7]
+AND r12 r21 r8
+BEQ r12 r21 ROT2_DECB             # 0001x, goto [2, 3]
+AND r12 r20 r8
+BEQ r12 r20 ROT1_DECB             # 00001, goto [1]
+SHR r11 r7 0                    # 00001 [1]
+SHL r10 r7 32             
+JMP ROT_MERGE_DECB               # 00000 [0]
+ROT1_DECB:                       
+SHR r11 r7 1                    # 00001 [1]
+SHL r10 r7 31                    
+JMP ROT_MERGE_DECB               
+ROT2_DECB:                       # 00001 [2, 3]
+AND r12 r20 r8                   
+BEQ r12 r20 ROT3_DECB             # 00011, goto [3]
+SHR r11 r7 2                    # 00010 [2]
+SHL r10 r7 30      
+JMP ROT_MERGE_DECB               
+ROT3_DECB:
+SHR r11 r7 3                    # 00011 [3]
+SHL r10 r7 29      
+JMP ROT_MERGE_DECB              
+ROT4_DECB:                       # 001xx [4, 7]
+AND r12 r21 r8                   
+BEQ r12 r21 ROT6_DECB             # 0011x, goto [6, 7]
+AND r12 r20 r8                   
+BEQ r12 r20 ROT5_DECB             # 00101, goto [5]
+SHR r11 r7 4                    # 00100 [4]
+SHL r10 r7 28  
+JMP ROT_MERGE_DECB                
+ROT5_DECB:                       # 00101 [5]
+SHR r11 r7 5                    # 00100 [4]
+SHL r10 r7 27  
+JMP ROT_MERGE_DECB       
+ROT6_DECB:
+AND r12 r20 r8                   
+BEQ r12 r20 ROT7_DECB             # 00111, goto [7]
+SHR r11 r7 6                    # 00110 [6]
+SHL r10 r7 26   
+JMP ROT_MERGE_DECB      
+ROT7_DECB:
+SHR r11 r7 7                    # 00111 [7]
+SHL r10 r7 25     
+JMP ROT_MERGE_DECB    
+ROT8_DECB:                       # 01xxx [8, 15]
+AND r12 r22 r8
+BEQ r12 r22 ROT12_DECB            # 011xx, goto [12, 15]
+AND r12 r21 r8
+BEQ r12 r21 ROT10_DECB            # 0101x, goto [10, 11]
+AND r12 r20 r8
+BEQ r12 r20 ROT9_DECB             # 01001, goto [9]
+SHR r11 r7 8                    # 01000 [8]
+SHL r10 r7 24   
+JMP ROT_MERGE_DECB                 
+ROT9_DECB:
+SHR r11 r7 9                    # 01001 [9]
+SHL r10 r7 23   
+JMP ROT_MERGE_DECB           
+ROT10_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT11_DECB
+SHR r11 r7 10                    # 01001 [9]
+SHL r10 r7 22   
+JMP ROT_MERGE_DECB   
+ROT11_DECB:
+SHR r11 r7 11                    # 01001 [9]
+SHL r10 r7 21   
+JMP ROT_MERGE_DECB   
+ROT12_DECB:
+AND r12 r21 r8
+BEQ r12 r21 ROT14_DECB
+AND r12 r20 r8
+BEQ r12 r20 ROT13_DECB
+SHR r11 r7 12                    # 01001 [9]
+SHL r10 r7 20   
+JMP ROT_MERGE_DECB   
+ROT13_DECB:
+SHR r11 r7 13                    # 01001 [9]
+SHL r10 r7 19   
+JMP ROT_MERGE_DECB   
+ROT14_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT15_DECB
+SHR r11 r7 14                    # 01001 [9]
+SHL r10 r7 18   
+JMP ROT_MERGE_DECB   
+ROT15_DECB:
+SHR r11 r7 15                    # 01001 [9]
+SHL r10 r7 17   
+JMP ROT_MERGE_DECB   
+ROT16_DECB:
+AND r12 r23 r8
+BEQ r12 r23 ROT24_DECB
+AND r12 r22 r8
+BEQ r12 r22 ROT20_DECB
+AND r12 r21 r8
+BEQ r12 r21 ROT18_DECB
+AND r12 r20 r8
+BEQ r12 r20 ROT17_DECB
+SHR r11 r7 16                    # 01001 [9]
+SHL r10 r7 16   
+JMP ROT_MERGE_DECB   
+ROT17_DECB:
+SHR r11 r7 17                    # 01001 [9]
+SHL r10 r7 15   
+JMP ROT_MERGE_DECB   
+ROT18_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT19_DECB
+SHR r11 r7 18                    # 01001 [9]
+SHL r10 r7 14   
+JMP ROT_MERGE_DECB  
+ROT19_DECB:
+SHR r11 r7 19                    # 01001 [9]
+SHL r10 r7 13   
+JMP ROT_MERGE_DECB   
+ROT20_DECB:
+AND r12 r21 r8
+BEQ r12 r21 ROT22_DECB
+AND r12 r20 r8
+BEQ r12 r20 ROT21_DECB
+SHR r11 r7 20                    # 01001 [9]
+SHL r10 r7 12   
+JMP ROT_MERGE_DECB   
+ROT21_DECB:
+SHR r11 r7 21                    # 01001 [9]
+SHL r10 r7 11   
+JMP ROT_MERGE_DECB   
+ROT22_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT23_DECB
+SHR r11 r7 22                    # 01001 [9]
+SHL r10 r7 10   
+JMP ROT_MERGE_DECB   
+ROT23_DECB:
+SHR r11 r7 23                    # 01001 [9]
+SHL r10 r7 9   
+JMP ROT_MERGE_DECB   
+ROT24_DECB:
+AND r12 r22 r8
+BEQ r12 r22 ROT28_DECB
+AND r12 r21 r8
+BEQ r12 r21 ROT26_DECB
+AND r12 r20 r8
+BEQ r12 r20 ROT25_DECB
+SHR r11 r7 24                    # 01001 [9]
+SHL r10 r7 8   
+JMP ROT_MERGE_DECB   
+ROT25_DECB:
+SHR r11 r7 25                    # 01001 [9]
+SHL r10 r7 7   
+JMP ROT_MERGE_DECB   
+ROT26_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT27_DECB
+SHR r11 r7 26                    # 01001 [9]
+SHL r10 r7 6   
+JMP ROT_MERGE_DECB   
+ROT27_DECB:
+SHR r11 r7 27                    # 01001 [9]
+SHL r10 r7 5   
+JMP ROT_MERGE_DECB   
+ROT28_DECB:
+AND r12 r21 r8
+BEQ r12 r21 ROT30_DECB
+AND r12 r20 r8
+BEQ r12 r20 ROT29_DECB
+SHR r11 r7 28                    # 01001 [9]
+SHL r10 r7 4   
+JMP ROT_MERGE_DECB   
+ROT29_DECB:
+SHR r11 r7 29                    # 01001 [9]
+SHL r10 r7 3   
+JMP ROT_MERGE_DECB   
+ROT30_DECB:
+AND r12 r20 r8
+BEQ r12 r20 ROT31_DECB
+SHR r11 r7 30                    # 01001 [9]
+SHL r10 r7 2   
+JMP ROT_MERGE_DECB   
+ROT31_DECB:
+SHR r11 r7 31                    # 01001 [9]
+SHL r10 r7 1
 
-ORI r16 r0 32                   # total rotation bits = 32
-BEQ r0 r0 2
-SHL r11 r11 1                   # r11 <- r11 << 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < 32
-
+ROT_MERGE_DECB:
 OR r9 r11 r10                   # r9 <- rotr(B - S[i*2+1], A)
 
 # xor
-AND r11 r8 r9                   # r11 <- A and B
-NOR r11 r11 r0                  # r11 <- A nand B
-ORI r10 r11 0                   # r10 <- A nand B
-AND r11 r11 r9                  # r11 <- B and (A nand B)
-NOR r11 r11 r0                  # r11 <- B nand (A nand B))
-AND r10 r10 r8                  # r10 <- A and (A nand B)
-NOR r10 r10 r0                  # r10 <- A nand (A nand B))
-AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
-NOR r9 r10 r0                   # r9 <- B = (B nand (A nand B))) nand (A nand (A nand B)))
+NOR r11 r8 r9                   # r11 <- A nor B
+AND r10 r8 r9                   # r11 <- A and B
+NOR r9 r10 r11                  # r9  <- rotr()^A
 
 # calculate A
 LW r7 r4 0                      # r7 <- S[i*2]
-SUB r10 r8 r7                   # r10 <- A - S[i*2]
-OR r11 r10 r10                  # r11 <- r10
+SUB r7 r8 r7                    # r10 <- A - S[i*2]
 
-ORI r6 r0 0                     # rotation counter
-AND r16 r26 r9                  # B: 5 LSB rotation bits
-BEQ r0 r0 2
-SHR r10 r10 1                   # r10 <- r10 >> 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < rotation bits
+# right rotate r7 by r9
+# start from xxxxx [0, 31] 
+AND r12 r24 r9                   
+BEQ r12 r24 ROT16_DECA            # 1xxxx, goto [16, 31] 
+ROT0_DECA:                       # 0xxxx [0, 15]
+AND r12 r23 r9    
+BEQ r12 r23 ROT8_DECA             # 01xxx, goto [8, 15]
+AND r12 r22 r9
+BEQ r12 r22 ROT4_DECA             # 001xx, goto [4, 7]
+AND r12 r21 r9
+BEQ r12 r21 ROT2_DECA             # 0001x, goto [2, 3]
+AND r12 r20 r9
+BEQ r12 r20 ROT1_DECA             # 00001, goto [1]
+SHR r11 r7 0                    # 00001 [1]
+SHL r10 r7 32             
+JMP ROT_MERGE_DECA               # 00000 [0]
+ROT1_DECA:                       
+SHR r11 r7 1                    # 00001 [1]
+SHL r10 r7 31                    
+JMP ROT_MERGE_DECA               
+ROT2_DECA:                       # 00001 [2, 3]
+AND r12 r20 r9                   
+BEQ r12 r20 ROT3_DECA             # 00011, goto [3]
+SHR r11 r7 2                    # 00010 [2]
+SHL r10 r7 30      
+JMP ROT_MERGE_DECA               
+ROT3_DECA:
+SHR r11 r7 3                    # 00011 [3]
+SHL r10 r7 29      
+JMP ROT_MERGE_DECA              
+ROT4_DECA:                       # 001xx [4, 7]
+AND r12 r21 r9                   
+BEQ r12 r21 ROT6_DECA             # 0011x, goto [6, 7]
+AND r12 r20 r9                   
+BEQ r12 r20 ROT5_DECA             # 00101, goto [5]
+SHR r11 r7 4                    # 00100 [4]
+SHL r10 r7 28  
+JMP ROT_MERGE_DECA                
+ROT5_DECA:                       # 00101 [5]
+SHR r11 r7 5                    # 00100 [4]
+SHL r10 r7 27  
+JMP ROT_MERGE_DECA       
+ROT6_DECA:
+AND r12 r20 r9                   
+BEQ r12 r20 ROT7_DECA             # 00111, goto [7]
+SHR r11 r7 6                    # 00110 [6]
+SHL r10 r7 26   
+JMP ROT_MERGE_DECA      
+ROT7_DECA:
+SHR r11 r7 7                    # 00111 [7]
+SHL r10 r7 25     
+JMP ROT_MERGE_DECA    
+ROT8_DECA:                       # 01xxx [8, 15]
+AND r12 r22 r9
+BEQ r12 r22 ROT12_DECA            # 011xx, goto [12, 15]
+AND r12 r21 r9
+BEQ r12 r21 ROT10_DECA            # 0101x, goto [10, 11]
+AND r12 r20 r9
+BEQ r12 r20 ROT9_DECA             # 01001, goto [9]
+SHR r11 r7 8                    # 01000 [8]
+SHL r10 r7 24   
+JMP ROT_MERGE_DECA                 
+ROT9_DECA:
+SHR r11 r7 9                    # 01001 [9]
+SHL r10 r7 23   
+JMP ROT_MERGE_DECA           
+ROT10_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT11_DECA
+SHR r11 r7 10                    # 01001 [9]
+SHL r10 r7 22   
+JMP ROT_MERGE_DECA   
+ROT11_DECA:
+SHR r11 r7 11                    # 01001 [9]
+SHL r10 r7 21   
+JMP ROT_MERGE_DECA   
+ROT12_DECA:
+AND r12 r21 r9
+BEQ r12 r21 ROT14_DECA
+AND r12 r20 r9
+BEQ r12 r20 ROT13_DECA
+SHR r11 r7 12                    # 01001 [9]
+SHL r10 r7 20   
+JMP ROT_MERGE_DECA   
+ROT13_DECA:
+SHR r11 r7 13                    # 01001 [9]
+SHL r10 r7 19   
+JMP ROT_MERGE_DECA   
+ROT14_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT15_DECA
+SHR r11 r7 14                    # 01001 [9]
+SHL r10 r7 18   
+JMP ROT_MERGE_DECA   
+ROT15_DECA:
+SHR r11 r7 15                    # 01001 [9]
+SHL r10 r7 17   
+JMP ROT_MERGE_DECA   
+ROT16_DECA:
+AND r12 r23 r9
+BEQ r12 r23 ROT24_DECA
+AND r12 r22 r9
+BEQ r12 r22 ROT20_DECA
+AND r12 r21 r9
+BEQ r12 r21 ROT18_DECA
+AND r12 r20 r9
+BEQ r12 r20 ROT17_DECA
+SHR r11 r7 16                    # 01001 [9]
+SHL r10 r7 16   
+JMP ROT_MERGE_DECA   
+ROT17_DECA:
+SHR r11 r7 17                    # 01001 [9]
+SHL r10 r7 15   
+JMP ROT_MERGE_DECA   
+ROT18_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT19_DECA
+SHR r11 r7 18                    # 01001 [9]
+SHL r10 r7 14   
+JMP ROT_MERGE_DECA  
+ROT19_DECA:
+SHR r11 r7 19                    # 01001 [9]
+SHL r10 r7 13   
+JMP ROT_MERGE_DECA   
+ROT20_DECA:
+AND r12 r21 r9
+BEQ r12 r21 ROT22_DECA
+AND r12 r20 r9
+BEQ r12 r20 ROT21_DECA
+SHR r11 r7 20                    # 01001 [9]
+SHL r10 r7 12   
+JMP ROT_MERGE_DECA   
+ROT21_DECA:
+SHR r11 r7 21                    # 01001 [9]
+SHL r10 r7 11   
+JMP ROT_MERGE_DECA   
+ROT22_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT23_DECA
+SHR r11 r7 22                    # 01001 [9]
+SHL r10 r7 10   
+JMP ROT_MERGE_DECA   
+ROT23_DECA:
+SHR r11 r7 23                    # 01001 [9]
+SHL r10 r7 9   
+JMP ROT_MERGE_DECA   
+ROT24_DECA:
+AND r12 r22 r9
+BEQ r12 r22 ROT28_DECA
+AND r12 r21 r9
+BEQ r12 r21 ROT26_DECA
+AND r12 r20 r9
+BEQ r12 r20 ROT25_DECA
+SHR r11 r7 24                    # 01001 [9]
+SHL r10 r7 8   
+JMP ROT_MERGE_DECA   
+ROT25_DECA:
+SHR r11 r7 25                    # 01001 [9]
+SHL r10 r7 7   
+JMP ROT_MERGE_DECA   
+ROT26_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT27_DECA
+SHR r11 r7 26                    # 01001 [9]
+SHL r10 r7 6   
+JMP ROT_MERGE_DECA   
+ROT27_DECA:
+SHR r11 r7 27                    # 01001 [9]
+SHL r10 r7 5   
+JMP ROT_MERGE_DECA   
+ROT28_DECA:
+AND r12 r21 r9
+BEQ r12 r21 ROT30_DECA
+AND r12 r20 r9
+BEQ r12 r20 ROT29_DECA
+SHR r11 r7 28                    # 01001 [9]
+SHL r10 r7 4   
+JMP ROT_MERGE_DECA   
+ROT29_DECA:
+SHR r11 r7 29                    # 01001 [9]
+SHL r10 r7 3   
+JMP ROT_MERGE_DECA   
+ROT30_DECA:
+AND r12 r20 r9
+BEQ r12 r20 ROT31_DECA
+SHR r11 r7 30                    # 01001 [9]
+SHL r10 r7 2   
+JMP ROT_MERGE_DECA   
+ROT31_DECA:
+SHR r11 r7 31                    # 01001 [9]
+SHL r10 r7 1
 
-ORI r16 r0 32                   # total rotation bits = 32
-BEQ r0 r0 2
-SHL r11 r11 1                   # r11 <- r11 << 1
-ADDI r6 r6 1                    # r6 += 1
-BLT r16 r6 -3                   # loop if r6 < 32
-
+ROT_MERGE_DECA:
 OR r8 r11 r10                   # r9 <- rotr(B - S[i*2+1], A)
 
 # xor
-AND r11 r8 r9                   # r11 <- A and B
-NOR r11 r11 r0                  # r11 <- A nand B
-ORI r10 r11 0                   # r10 <- A nand B
-AND r11 r11 r9                  # r11 <- B and (A nand B)
-NOR r11 r11 r0                  # r11 <- B nand (A nand B))
-AND r10 r10 r8                  # r10 <- A and (A nand B)
-NOR r10 r10 r0                  # r10 <- A nand (A nand B))
-AND r10 r11 r10                 # r10 <- (B nand (A nand B))) and (A nand (A nand B)))
-NOR r8 r10 r0                   # r9 <- B = (B nand (A nand B))) nand (A nand (A nand B)))
+NOR r11 r8 r9                   # r11 <- A nor B
+AND r10 r8 r9                   # r11 <- A and B
+NOR r8 r10 r11                  # r8  <- rotr()^B 
 
 # decrement and loop
 SUBI r3 r3 1
@@ -598,19 +1487,22 @@ SHR r28 r31 16
 BNE r28 r0 -2                   # wait for all buttons being released
 
 DEC_CHECK_BTNL:
-AND r28 r22 r31
+SHR r28 r31 16
+AND r28 r28 r22
 BNE r28 r22 DEC_CHECK_BTNR      # if not pressed, check next btn
 LW r30 r0 33                    # display 16 MSB
 LW r29 r1 90                    # turn on led(1)
 
 DEC_CHECK_BTNR:
-AND r28 r23 r31
+SHR r28 r31 16
+AND r28 r28 r23
 BNE r28 r23 DEC_CHECK_BTND      # if not pressed, check next btn
 LW r30 r0 32                    # display 16 LSB
 LW r29 r0 90                    # turn on led(0)
 
 DEC_CHECK_BTND:
-AND r28 r24 r31
+SHR r28 r31 16
+AND r28 r28 r24
 BNE r28 r24 DEC_CHECK_BTNL       # if not pressed, check next btn
 JMP MAIN
 
