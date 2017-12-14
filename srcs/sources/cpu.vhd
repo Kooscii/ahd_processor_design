@@ -11,9 +11,9 @@ entity cpu is
           -- 7-seg
           seg : out std_logic_vector (6 downto 0);
           an : out std_logic_vector (7 downto 0);
-          dp : out std_logic;
-          tx : out std_logic;
-          rx : in std_logic
+          dp : out std_logic
+--          tx : out std_logic;
+--          rx : in std_logic
 --          -- inst update
 --          prog_addr : in std_logic_vector (31 downto 0);
 --          prog_wd : in std_logic_vector (31 downto 0);
