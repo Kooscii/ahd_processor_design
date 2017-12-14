@@ -53,8 +53,8 @@ architecture Behavioral of tb_cpu is
 --    signal debug_0 : std_logic_vector (31 downto 0);
 --    signal debug_1 : std_logic_vector (31 downto 0);
     
-    constant clk_period : time := 10 ns;
-    constant btn_delay : time := 200 ns;
+    constant clk_period : time := 15 ns;
+    constant btn_delay : time := clk_period*30;
     file file_VECTORS : text;
     
     type type_check_state is (CHECKING, FAILED, PASSED);
@@ -85,6 +85,9 @@ architecture Behavioral of tb_cpu is
     constant an_code : type_ancode := (
         "11111110", "11111101", "11111011", "11110111",
         "11101111", "11011111", "10111111", "01111111");
+        
+    signal digit: unsigned (3 downto 0);
+    signal index: integer;
     
 begin
 
@@ -109,6 +112,36 @@ begin
 --            prog_clk => prog_clk,
 --            debug_0 => debug_0,
 --            debug_1 => debug_1);
+
+    with seg select digit <= 
+        TO_UNSIGNED(0, 4) when "1000000",
+        TO_UNSIGNED(1, 4) when "1111001",
+        TO_UNSIGNED(2, 4) when "0100100",
+        TO_UNSIGNED(3, 4) when "0110000",
+        TO_UNSIGNED(4, 4) when "0011001",
+        TO_UNSIGNED(5, 4) when "0010010",
+        TO_UNSIGNED(6, 4) when "0000010",
+        TO_UNSIGNED(7, 4) when "1111000",
+        TO_UNSIGNED(8, 4) when "0000000",
+        TO_UNSIGNED(9, 4) when "0010000",
+        TO_UNSIGNED(10, 4) when "0001000",
+        TO_UNSIGNED(11, 4) when "0000011",
+        TO_UNSIGNED(12, 4) when "1000110",
+        TO_UNSIGNED(13, 4) when "0100001",
+        TO_UNSIGNED(14, 4) when "0000110",
+        TO_UNSIGNED(15, 4) when "0001110",
+        TO_UNSIGNED(0, 4) when others;
+        
+    with an select index <=
+        0 when "11111110",
+        1 when "11111101",
+        2 when "11111011",                      
+        3 when "11110111",
+        4 when "11101111",
+        5 when "11011111",
+        6 when "10111111",
+        7 when "01111111",
+        8 when others;
     
     process
         variable v_ILINE : line;
@@ -131,8 +164,9 @@ begin
         check_state <= CHECKING;
         rst <= '1';
         wait for clk_period*50;
+        wait until falling_edge(clk);
         
-        for i in 1 to 10 loop
+        for i in 1 to 3 loop
 --            -- programing
 --            rst <= '1';
 --            for k in 0 to 511 loop
@@ -164,7 +198,7 @@ begin
             wait for clk_period*2600;
             
             btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;         
-            for j in 1 to 1000 loop
+            for j in 1 to 50 loop
                 -- input din
                 readline(file_VECTORS, v_ILINE);
                 read(v_ILINE, txt);
@@ -185,18 +219,16 @@ begin
                 read(v_ILINE, expected);
                 -- check 32MSB digit by digit
                 for k in 7 downto 0 loop
-                    wait until an <= an_code(k);
-                    wait until falling_edge(clk);
-                    assert seg = seg_code(TO_INTEGER(UNSIGNED(expected(k*4+3+32 downto k*4+32))))
+                    wait until led(k+8) = '1';
+                    assert digit = UNSIGNED(expected(k*4+3+32 downto k*4+32))
                         report "wrong"
                             severity failure;
                 end loop;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
                 -- check 32MSB digit by digit
                 for k in 7 downto 0 loop
-                    wait until an <= an_code(k);
-                    wait until falling_edge(clk);
-                    assert seg = seg_code(TO_INTEGER(UNSIGNED(expected(k*4+3 downto k*4))))
+                    wait until led(k+8) = '1';
+                    assert digit = UNSIGNED(expected(k*4+3 downto k*4))
                         report "wrong"
                             severity failure;
                 end loop;
@@ -212,18 +244,16 @@ begin
                 read(v_ILINE, expected);
                 -- check 32MSB digit by digit
                 for k in 7 downto 0 loop
-                    wait until an <= an_code(k);
-                    wait until falling_edge(clk);
-                    assert seg = seg_code(TO_INTEGER(UNSIGNED(expected(k*4+3+32 downto k*4+32))))
+                    wait until led(k+8) = '1';
+                    assert digit = UNSIGNED(expected(k*4+3+32 downto k*4+32))
                         report "wrong"
                             severity failure;
                 end loop;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
                 -- check 32MSB digit by digit
                 for k in 7 downto 0 loop
-                    wait until an <= an_code(k);
-                    wait until falling_edge(clk);
-                    assert seg = seg_code(TO_INTEGER(UNSIGNED(expected(k*4+3 downto k*4))))
+                    wait until led(k+8) = '1';
+                    assert digit = UNSIGNED(expected(k*4+3 downto k*4))
                         report "wrong"
                             severity failure;
                 end loop;

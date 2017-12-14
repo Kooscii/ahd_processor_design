@@ -73,15 +73,15 @@ architecture Behavioral of cpu is
         Port ( rd1 : out STD_LOGIC_VECTOR (31 downto 0);
                rd2 : out STD_LOGIC_VECTOR (31 downto 0);
                clk : in STD_LOGIC;
-               rst : in STD_LOGIC;
+--               rst : in STD_LOGIC;
                we : in STD_LOGIC;
                rs : in STD_LOGIC_VECTOR (4 downto 0);
                rt : in STD_LOGIC_VECTOR (4 downto 0);
                rd : in STD_LOGIC_VECTOR (4 downto 0);
-               wd : in STD_LOGIC_VECTOR (31 downto 0);
-               r31 : in STD_LOGIC_VECTOR (31 downto 0); -- read-only
-               r30 : out STD_LOGIC_VECTOR (31 downto 0);
-               r29 : out STD_LOGIC_VECTOR (31 downto 0));
+               wd : in STD_LOGIC_VECTOR (31 downto 0));
+--               r31 : in STD_LOGIC_VECTOR (31 downto 0); -- read-only
+--               r30 : out STD_LOGIC_VECTOR (31 downto 0);
+--               r29 : out STD_LOGIC_VECTOR (31 downto 0));
     end component;
     
     component alu is
@@ -101,7 +101,7 @@ architecture Behavioral of cpu is
     component data_mem is
         Port ( rd : out STD_LOGIC_VECTOR (31 downto 0);
                clk : in STD_LOGIC;
-               rst : in STD_LOGIC;
+--               rst : in STD_LOGIC;
                we : in STD_LOGIC;
                addr : in STD_LOGIC_VECTOR (31 downto 0);
                wd : in STD_LOGIC_VECTOR (31 downto 0));
@@ -130,10 +130,11 @@ architecture Behavioral of cpu is
     signal rst_sync : std_logic;
     
     -- pc
-    signal pc : unsigned (31 downto 0);
-    signal pc_pl4 : unsigned (31 downto 0);
-    signal pc_offset : unsigned (31 downto 0);
-    signal pc_src : std_logic_vector (1 downto 0);
+    signal pc : std_logic_vector (31 downto 0);
+--    signal pc : unsigned (31 downto 0);
+--    signal pc_pl4 : unsigned (31 downto 0);
+--    signal pc_offset : unsigned (31 downto 0);
+--    signal pc_src : std_logic_vector (1 downto 0);
     
     -- instruction
     signal inst : std_logic_vector (31 downto 0);
@@ -159,6 +160,8 @@ architecture Behavioral of cpu is
     -- register file
     signal reg_rd1 : std_logic_vector (31 downto 0);
     signal reg_rd2 : std_logic_vector (31 downto 0);
+    signal reg_op1 : std_logic_vector (31 downto 0);
+    signal reg_op2 : std_logic_vector (31 downto 0);
     signal reg_wd : std_logic_vector (31 downto 0);
     signal reg_dst : std_logic_vector (4 downto 0);
     
@@ -179,11 +182,19 @@ architecture Behavioral of cpu is
     signal r31_debounced : std_logic_vector (31 downto 0);
     
     -- 7-seg and led display
-    signal seg_din : std_logic_vector (31 downto 0);
-    signal led_din : std_logic_vector (31 downto 0);
+    signal seg_reg : std_logic_vector (31 downto 0);
+    signal led_reg : std_logic_vector (31 downto 0);
     
---    signal clk_div4 : std_logic := '0';
+--    signal clk_div : std_logic := '0';
+    signal clk_src : std_logic;
     signal rst : std_logic;
+    
+    component clk_wiz_0 is
+        port (
+            clk_out1: out std_logic;
+            reset: in std_logic;
+            clk_in1: in std_logic);
+    end component;
 
 begin
 
@@ -198,46 +209,66 @@ begin
 --            d := 0;
 --        elsif rising_edge(clk) then
 --            if setup = '1' then
---                d := d + 1;
---                if d = 2 then
---                    d := 0;
---                    clk_div4 <= not clk_div4;
---                end if;    
+--                clk_div <= not clk_div;
 --            else
---                clk_div4 <= '0';
+--                clk_div <= '0';
 --                setup := '1';
 --                d := 0;
 --            end if ;
 --        end if;
 --    end process;
 
-    pc_pl4 <= pc + 4;
-    pc_offset <= unsigned(imm_sign_ext(29 downto 0) & "00");
-    pc_src(0) <= ctrl_jump;
-    pc_src(1) <= ctrl_branch and (alu_condi or ctrl_jump);
+    U_clk : clk_wiz_0 
+        port map (
+            clk_out1 => clk_src,
+            reset => rst,
+            clk_in1 => clk);
+
+--    clk_src <= clk;
     
-    PC_SYNC : process(clk, rst)
+--    pc_pl4 <= pc + 4;
+--    pc_offset <= unsigned(imm_sign_ext(29 downto 0) & "00");
+--    pc_src(0) <= ctrl_jump;
+--    pc_src(1) <= ctrl_branch and (alu_condi or ctrl_jump);
+    
+--    PC_SYNC : process(clk_src, rst)
+--    begin
+--        if (rst = '1') then 
+--            pc <= TO_UNSIGNED(0, 32);
+--        elsif rising_edge(clk_src) then
+--            case pc_src is
+--                when "00" =>                    -- next inst
+--                    pc <= pc_pl4;                              
+--                when "01" =>                    -- jump
+--                    pc <= pc_pl4(31 downto 28) & unsigned(inst_addr) & "00" ;
+--                when "10" =>                    -- branch
+--                    pc <= pc_offset + pc_pl4;
+--                when others =>                  -- halt
+--                    pc <= pc;
+--            end case;
+--        end if;
+--    end process;
+    
+    process(clk_src)
     begin
-        if (rst = '1') then 
-            pc <= TO_UNSIGNED(0, 32);
-        elsif rising_edge(clk) then
-            case pc_src is
-                when "00" =>                    -- next inst
-                    pc <= pc_pl4;                              
-                when "01" =>                    -- jump
-                    pc <= pc_pl4(31 downto 28) & unsigned(inst_addr) & "00" ;
-                when "10" =>                    -- branch
-                    pc <= pc_offset + pc_pl4;
-                when others =>                  -- halt
-                    pc <= pc;
-            end case;
+        if rising_edge(clk_src) then
+            if ctrl_regwrt = '1' then
+                case reg_dst is
+                    when "11110" => 
+                        seg_reg <= reg_wd;
+                    when "11101" =>
+                        led_reg <= reg_wd;
+                    when others =>
+                        null;
+                end case;
+            end if;
         end if;
     end process;
             
         
     U_rst : reset_unit
         Port map ( 
-            clk => clk,
+            clk => clk_src,
             rst_in => rst,
             rst_out => rst_sync);
     
@@ -274,47 +305,49 @@ begin
                    regwrt => ctrl_regwrt,
                    inst => inst);
     
+    with inst_rs select reg_op1 <= r31_debounced when "11111", reg_rd1 when others;
+    with inst_rt select reg_op2 <= r31_debounced when "11111", reg_rd2 when others;
     with ctrl_regdst select reg_dst <= inst_rd when '1', inst_rt when others;
     U_reg_file : reg_file
         port map ( rd1 => reg_rd1,
                    rd2 => reg_rd2,
-                   clk => clk,
-                   rst => rst_sync,
+                   clk => clk_src,
+--                   rst => rst_sync,
                    we => ctrl_regwrt,
                    rs => inst_rs,
                    rt => inst_rt,
                    rd => reg_dst,
-                   wd => reg_wd,
-                   r31 => r31_debounced,
-                   r30 => seg_din,
-                   r29 => led_din);
+                   wd => reg_wd);
+--                   r31 => r31_debounced,
+--                   r30 => seg_din,
+--                   r29 => led_din);
                    
     r31_raw_btn_sw (31 downto 21) <= (others=> '0');
     r31_raw_btn_sw (20 downto 16) <= btn;
     r31_raw_btn_sw (15 downto 0) <= sw;
     U_debounce32 : debounce32 
         port map (
-            clk=>clk, 
+            clk=>clk_src, 
             rst=>rst, 
             din=>r31_raw_btn_sw, 
             dout=>r31_debounced);
                   
     U_seg_led : seg_led
-        Port map ( seg_din => seg_din,
-                   led_din => led_din,
+        Port map ( seg_din => seg_reg,
+                   led_din => led_reg,
                    seg => seg,
                    dp => dp,
                    an => an,
                    led => led,
                    rst => rst,
-                   clk => clk);
+                   clk => clk_src);
                    
-    with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_rd2 when others;
+    with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_op2 when others;
     U_alu : alu 
         port map ( result => alu_result,
                    eq => alu_eq,
                    lt => alu_lt,
-                   op1 => reg_rd1,
+                   op1 => reg_op1,
                    op2 => alu_op2,
                    funct => ctrl_funct);
                    
@@ -322,14 +355,14 @@ begin
         port map ( imm32 => imm_sign_ext,
                    imm16 => inst_imm);
     
-    mem_addr <= std_logic_vector(signed(reg_rd1)+signed(imm_sign_ext));
+    mem_addr <= std_logic_vector(signed(reg_op1)+signed(imm_sign_ext));
     U_data_mem : data_mem
         port map ( rd => mem_rd,
-                   clk => clk,
-                   rst => rst_sync,
+                   clk => clk_src,
+--                   rst => rst_sync,
                    we => ctrl_sw,
                    addr => mem_addr,
-                   wd => reg_rd2);
+                   wd => reg_op2);
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
     

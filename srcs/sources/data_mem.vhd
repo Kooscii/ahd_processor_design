@@ -42,7 +42,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity data_mem is
     Port ( rd : out STD_LOGIC_VECTOR (31 downto 0);
            clk : in STD_LOGIC;
-           rst : in STD_LOGIC;
+--           rst : in STD_LOGIC;
            we : in STD_LOGIC;
            addr : in STD_LOGIC_VECTOR (31 downto 0);
            wd : in STD_LOGIC_VECTOR (31 downto 0));
@@ -84,13 +84,13 @@ begin
 ---  clear now but still NOT 100% understand
 
    
-	process (clk, rst)
+	process (clk)
 	begin
 	  ---Reset all to 0x0 when rst is HIGH
-	  if (rst = '1')  then
-	  ---Reading data is asynchronous, rd = MEM[addr:addr+4].
-			data_mem <= (OTHERS => std_logic_vector(TO_UNSIGNED(0, 32)));
-	  elsif rising_edge(clk) then 
+--	  if (rst = '1')  then
+--	  ---Reading data is asynchronous, rd = MEM[addr:addr+4].
+--			data_mem <= (OTHERS => std_logic_vector(TO_UNSIGNED(0, 32)));
+	  if rising_edge(clk) then 
 			if we = '1' then
 				data_mem(TO_INTEGER(unsigned(addr(6 downto 0)))) <= wd;
 			end if;

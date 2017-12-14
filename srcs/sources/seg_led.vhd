@@ -67,18 +67,24 @@ begin
             i <= 7;
         elsif rising_edge(clk) then
             t := t + 1;
-            if t = 1 then      -- refresh rate 100Hz
+            if t = 50000 then      -- refresh rate 1000Hz
                 t := 0;
+--                led(15 downto 8) <= (others=>'1');
                 if i = 0 then
                     i <= 7;
                 else
                     i <= i - 1;
                 end if;
+            elsif t = 1 then
+--                led(i+8) <= '0';
             end if;
+--            led(7 downto 0) <= led_din(7 downto 0);
         end if;
     end process;
-      
-    led <= led_din(15 downto 0);
+    
+    led(15 downto 14) <= led_din(15 downto 14);
+    led(11 downto 0) <= led_din(11 downto 0);
+    led(13 downto 12) <= "11";
     an <= an_code(i);
     seg <= seg_code(TO_INTEGER(unsigned(seg_din(i*4+3 downto i*4))));
     dp <= '1';

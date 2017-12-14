@@ -72,6 +72,7 @@ BNE r28 r0 MAIN                 # wait for all buttons being released
 ORI r29 r0 0                    # turn off led
 ORI r17 r0 5                    # menu index upper bound
 
+# iteratively check all buttons in a loop
 MAIN_LOOP:
 OR r30 r18 r19                  # diplay menu index
 
@@ -127,19 +128,6 @@ JMP MAIN_LOOP
 #########################################
 #   INPUT
 #########################################
-#   Input from switches
-#
-#   r28 <- interupt register
-#   r3 <- i
-#   r4 <- 4 (upper limit of the loop)
-#
-#   for(r3=0; r3!=r4; r3++) {
-#       wait for btn[0];
-#       r10 = switches;
-#       wait for btn[0];
-#       r11 = switches;
-#       MEM[r3+50] = (r11<<16) + r10;
-#   }
 
 #############################################
 #   Subprogram: UKEY_INPUT
@@ -202,7 +190,7 @@ BNE r28 r24 UKEY_CHECK_END      # if not pressed, check next btn
 JMP UKEY_MERGE
 
 UKEY_CHECK_END:
-JMP LOOP_UKEY_INPUT  # loop until r3 = -1
+JMP LOOP_UKEY_INPUT
 
 UKEY_MERGE:                     # merge 8*16bits to 4*32bits
 ORI r3 r0 3                     # i = 3
@@ -284,7 +272,7 @@ BNE r28 r24 DIN_CHECK_END       # if not pressed, check next btn
 JMP DIN_MERGE
 
 DIN_CHECK_END:
-JMP LOOP_DIN_INPUT  # loop until r3 = -1
+JMP LOOP_DIN_INPUT
 
 DIN_MERGE:                      # merge 4*16bits to 2*32bits
 ORI r3 r0 1                     # i = 1
@@ -372,77 +360,77 @@ ADD r7 r7 r6                    # r7 <- L[j] = L[j] + A + B
 # left rotate r7 by r6
 # start from xxxxx [0, 31] 
 AND r12 r24 r6                   
-BEQ r12 r24 ROT16_KEY            # 1xxxx, goto [16, 31] 
-ROT0_KEY:                       # 0xxxx [0, 15]
+BEQ r12 r24 ROT16_KEY               # 1xxxx, goto [16, 31] 
+ROT0_KEY:                           # 0xxxx [0, 15]
 AND r12 r23 r6    
-BEQ r12 r23 ROT8_KEY             # 01xxx, goto [8, 15]
+BEQ r12 r23 ROT8_KEY                # 01xxx, goto [8, 15]
 AND r12 r22 r6
-BEQ r12 r22 ROT4_KEY             # 001xx, goto [4, 7]
+BEQ r12 r22 ROT4_KEY                # 001xx, goto [4, 7]
 AND r12 r21 r6
-BEQ r12 r21 ROT2_KEY             # 0001x, goto [2, 3]
+BEQ r12 r21 ROT2_KEY                # 0001x, goto [2, 3]
 AND r12 r20 r6
-BEQ r12 r20 ROT1_KEY             # 00001, goto [1]
-SHL r11 r7 0                    # 00001 [1]
+BEQ r12 r20 ROT1_KEY                # 00001, goto [1]
+SHL r11 r7 0                        # 00001 [1]
 SHR r10 r7 32             
-JMP ROT_MERGE_KEY               # 00000 [0]
+JMP ROT_MERGE_KEY                   # 00000 [0]
 ROT1_KEY:                       
-SHL r11 r7 1                    # 00001 [1]
+SHL r11 r7 1                        # 00001 [1]
 SHR r10 r7 31                    
 JMP ROT_MERGE_KEY               
-ROT2_KEY:                       # 00001 [2, 3]
+ROT2_KEY:                           # 00001 [2, 3]
 AND r12 r20 r6                   
-BEQ r12 r20 ROT3_KEY             # 00011, goto [3]
-SHL r11 r7 2                    # 00010 [2]
+BEQ r12 r20 ROT3_KEY                # 00011, goto [3]
+SHL r11 r7 2                        # 00010 [2]
 SHR r10 r7 30      
 JMP ROT_MERGE_KEY               
 ROT3_KEY:
-SHL r11 r7 3                    # 00011 [3]
+SHL r11 r7 3                        # 00011 [3]
 SHR r10 r7 29      
 JMP ROT_MERGE_KEY              
-ROT4_KEY:                       # 001xx [4, 7]
+ROT4_KEY:                           # 001xx [4, 7]
 AND r12 r21 r6                   
-BEQ r12 r21 ROT6_KEY             # 0011x, goto [6, 7]
+BEQ r12 r21 ROT6_KEY                # 0011x, goto [6, 7]
 AND r12 r20 r6                   
-BEQ r12 r20 ROT5_KEY             # 00101, goto [5]
-SHL r11 r7 4                    # 00100 [4]
+BEQ r12 r20 ROT5_KEY                # 00101, goto [5]
+SHL r11 r7 4                        # 00100 [4]
 SHR r10 r7 28  
 JMP ROT_MERGE_KEY                
-ROT5_KEY:                       # 00101 [5]
-SHL r11 r7 5                    # 00100 [4]
+ROT5_KEY:                           # 00101 [5]
+SHL r11 r7 5                        # 00100 [4]
 SHR r10 r7 27  
 JMP ROT_MERGE_KEY       
 ROT6_KEY:
 AND r12 r20 r6                   
-BEQ r12 r20 ROT7_KEY             # 00111, goto [7]
-SHL r11 r7 6                    # 00110 [6]
+BEQ r12 r20 ROT7_KEY                # 00111, goto [7]
+SHL r11 r7 6                        # 00110 [6]
 SHR r10 r7 26   
 JMP ROT_MERGE_KEY      
 ROT7_KEY:
-SHL r11 r7 7                    # 00111 [7]
+SHL r11 r7 7                        # 00111 [7]
 SHR r10 r7 25     
 JMP ROT_MERGE_KEY    
-ROT8_KEY:                       # 01xxx [8, 15]
+ROT8_KEY:                           # 01xxx [8, 15]
 AND r12 r22 r6
-BEQ r12 r22 ROT12_KEY            # 011xx, goto [12, 15]
+BEQ r12 r22 ROT12_KEY               # 011xx, goto [12, 15]
 AND r12 r21 r6
-BEQ r12 r21 ROT10_KEY            # 0101x, goto [10, 11]
+BEQ r12 r21 ROT10_KEY               # 0101x, goto [10, 11]
 AND r12 r20 r6
-BEQ r12 r20 ROT9_KEY             # 01001, goto [9]
-SHL r11 r7 8                    # 01000 [8]
+BEQ r12 r20 ROT9_KEY                # 01001, goto [9]
+SHL r11 r7 8                        # 01000 [8]
 SHR r10 r7 24   
 JMP ROT_MERGE_KEY                 
-ROT9_KEY:
-SHL r11 r7 9                    # 01001 [9]
+ROT9_KEY:                           # so on and so forth
+SHL r11 r7 9                
 SHR r10 r7 23   
 JMP ROT_MERGE_KEY           
 ROT10_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT11_KEY
-SHL r11 r7 10                    # 01001 [9]
+SHL r11 r7 10                
 SHR r10 r7 22   
 JMP ROT_MERGE_KEY   
 ROT11_KEY:
-SHL r11 r7 11                    # 01001 [9]
+SHL r11 r7 11                
 SHR r10 r7 21   
 JMP ROT_MERGE_KEY   
 ROT12_KEY:
@@ -450,21 +438,21 @@ AND r12 r21 r6
 BEQ r12 r21 ROT14_KEY
 AND r12 r20 r6
 BEQ r12 r20 ROT13_KEY
-SHL r11 r7 12                    # 01001 [9]
+SHL r11 r7 12                
 SHR r10 r7 20   
 JMP ROT_MERGE_KEY   
 ROT13_KEY:
-SHL r11 r7 13                    # 01001 [9]
+SHL r11 r7 13                
 SHR r10 r7 19   
 JMP ROT_MERGE_KEY   
 ROT14_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT15_KEY
-SHL r11 r7 14                    # 01001 [9]
+SHL r11 r7 14                
 SHR r10 r7 18   
 JMP ROT_MERGE_KEY   
 ROT15_KEY:
-SHL r11 r7 15                    # 01001 [9]
+SHL r11 r7 15                
 SHR r10 r7 17   
 JMP ROT_MERGE_KEY   
 ROT16_KEY:
@@ -476,21 +464,21 @@ AND r12 r21 r6
 BEQ r12 r21 ROT18_KEY
 AND r12 r20 r6
 BEQ r12 r20 ROT17_KEY
-SHL r11 r7 16                    # 01001 [9]
+SHL r11 r7 16                
 SHR r10 r7 16   
 JMP ROT_MERGE_KEY   
 ROT17_KEY:
-SHL r11 r7 17                    # 01001 [9]
+SHL r11 r7 17                
 SHR r10 r7 15   
 JMP ROT_MERGE_KEY   
 ROT18_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT19_KEY
-SHL r11 r7 18                    # 01001 [9]
+SHL r11 r7 18                
 SHR r10 r7 14   
 JMP ROT_MERGE_KEY  
 ROT19_KEY:
-SHL r11 r7 19                    # 01001 [9]
+SHL r11 r7 19                
 SHR r10 r7 13   
 JMP ROT_MERGE_KEY   
 ROT20_KEY:
@@ -498,21 +486,21 @@ AND r12 r21 r6
 BEQ r12 r21 ROT22_KEY
 AND r12 r20 r6
 BEQ r12 r20 ROT21_KEY
-SHL r11 r7 20                    # 01001 [9]
+SHL r11 r7 20                
 SHR r10 r7 12   
 JMP ROT_MERGE_KEY   
 ROT21_KEY:
-SHL r11 r7 21                    # 01001 [9]
+SHL r11 r7 21                
 SHR r10 r7 11   
 JMP ROT_MERGE_KEY   
 ROT22_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT23_KEY
-SHL r11 r7 22                    # 01001 [9]
+SHL r11 r7 22                
 SHR r10 r7 10   
 JMP ROT_MERGE_KEY   
 ROT23_KEY:
-SHL r11 r7 23                    # 01001 [9]
+SHL r11 r7 23                
 SHR r10 r7 9   
 JMP ROT_MERGE_KEY   
 ROT24_KEY:
@@ -522,21 +510,21 @@ AND r12 r21 r6
 BEQ r12 r21 ROT26_KEY
 AND r12 r20 r6
 BEQ r12 r20 ROT25_KEY
-SHL r11 r7 24                    # 01001 [9]
+SHL r11 r7 24                
 SHR r10 r7 8   
 JMP ROT_MERGE_KEY   
 ROT25_KEY:
-SHL r11 r7 25                    # 01001 [9]
+SHL r11 r7 25                
 SHR r10 r7 7   
 JMP ROT_MERGE_KEY   
 ROT26_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT27_KEY
-SHL r11 r7 26                    # 01001 [9]
+SHL r11 r7 26                
 SHR r10 r7 6   
 JMP ROT_MERGE_KEY   
 ROT27_KEY:
-SHL r11 r7 27                    # 01001 [9]
+SHL r11 r7 27                
 SHR r10 r7 5   
 JMP ROT_MERGE_KEY   
 ROT28_KEY:
@@ -544,21 +532,21 @@ AND r12 r21 r6
 BEQ r12 r21 ROT30_KEY
 AND r12 r20 r6
 BEQ r12 r20 ROT29_KEY
-SHL r11 r7 28                    # 01001 [9]
+SHL r11 r7 28                
 SHR r10 r7 4   
 JMP ROT_MERGE_KEY   
 ROT29_KEY:
-SHL r11 r7 29                    # 01001 [9]
+SHL r11 r7 29                
 SHR r10 r7 3   
 JMP ROT_MERGE_KEY   
 ROT30_KEY:
 AND r12 r20 r6
 BEQ r12 r20 ROT31_KEY
-SHL r11 r7 30                    # 01001 [9]
+SHL r11 r7 30                
 SHR r10 r7 2   
 JMP ROT_MERGE_KEY   
 ROT31_KEY:
-SHL r11 r7 31                    # 01001 [9]
+SHL r11 r7 31                
 SHR r10 r7 1
 
 ROT_MERGE_KEY:
@@ -670,17 +658,17 @@ SHL r11 r7 8                    # 01000 [8]
 SHR r10 r7 24   
 JMP ROT_MERGE_ENCA                 
 ROT9_ENCA:
-SHL r11 r7 9                    # 01001 [9]
+SHL r11 r7 9                
 SHR r10 r7 23   
 JMP ROT_MERGE_ENCA           
 ROT10_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT11_ENCA
-SHL r11 r7 10                    # 01001 [9]
+SHL r11 r7 10                
 SHR r10 r7 22   
 JMP ROT_MERGE_ENCA   
 ROT11_ENCA:
-SHL r11 r7 11                    # 01001 [9]
+SHL r11 r7 11                
 SHR r10 r7 21   
 JMP ROT_MERGE_ENCA   
 ROT12_ENCA:
@@ -688,21 +676,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT14_ENCA
 AND r12 r20 r9
 BEQ r12 r20 ROT13_ENCA
-SHL r11 r7 12                    # 01001 [9]
+SHL r11 r7 12                
 SHR r10 r7 20   
 JMP ROT_MERGE_ENCA   
 ROT13_ENCA:
-SHL r11 r7 13                    # 01001 [9]
+SHL r11 r7 13                
 SHR r10 r7 19   
 JMP ROT_MERGE_ENCA   
 ROT14_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT15_ENCA
-SHL r11 r7 14                    # 01001 [9]
+SHL r11 r7 14                
 SHR r10 r7 18   
 JMP ROT_MERGE_ENCA   
 ROT15_ENCA:
-SHL r11 r7 15                    # 01001 [9]
+SHL r11 r7 15                
 SHR r10 r7 17   
 JMP ROT_MERGE_ENCA   
 ROT16_ENCA:
@@ -714,21 +702,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT18_ENCA
 AND r12 r20 r9
 BEQ r12 r20 ROT17_ENCA
-SHL r11 r7 16                    # 01001 [9]
+SHL r11 r7 16                
 SHR r10 r7 16   
 JMP ROT_MERGE_ENCA   
 ROT17_ENCA:
-SHL r11 r7 17                    # 01001 [9]
+SHL r11 r7 17                
 SHR r10 r7 15   
 JMP ROT_MERGE_ENCA   
 ROT18_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT19_ENCA
-SHL r11 r7 18                    # 01001 [9]
+SHL r11 r7 18                
 SHR r10 r7 14   
 JMP ROT_MERGE_ENCA  
 ROT19_ENCA:
-SHL r11 r7 19                    # 01001 [9]
+SHL r11 r7 19                
 SHR r10 r7 13   
 JMP ROT_MERGE_ENCA   
 ROT20_ENCA:
@@ -736,21 +724,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT22_ENCA
 AND r12 r20 r9
 BEQ r12 r20 ROT21_ENCA
-SHL r11 r7 20                    # 01001 [9]
+SHL r11 r7 20                
 SHR r10 r7 12   
 JMP ROT_MERGE_ENCA   
 ROT21_ENCA:
-SHL r11 r7 21                    # 01001 [9]
+SHL r11 r7 21                
 SHR r10 r7 11   
 JMP ROT_MERGE_ENCA   
 ROT22_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT23_ENCA
-SHL r11 r7 22                    # 01001 [9]
+SHL r11 r7 22                
 SHR r10 r7 10   
 JMP ROT_MERGE_ENCA   
 ROT23_ENCA:
-SHL r11 r7 23                    # 01001 [9]
+SHL r11 r7 23                
 SHR r10 r7 9   
 JMP ROT_MERGE_ENCA   
 ROT24_ENCA:
@@ -760,21 +748,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT26_ENCA
 AND r12 r20 r9
 BEQ r12 r20 ROT25_ENCA
-SHL r11 r7 24                    # 01001 [9]
+SHL r11 r7 24                
 SHR r10 r7 8   
 JMP ROT_MERGE_ENCA   
 ROT25_ENCA:
-SHL r11 r7 25                    # 01001 [9]
+SHL r11 r7 25                
 SHR r10 r7 7   
 JMP ROT_MERGE_ENCA   
 ROT26_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT27_ENCA
-SHL r11 r7 26                    # 01001 [9]
+SHL r11 r7 26                
 SHR r10 r7 6   
 JMP ROT_MERGE_ENCA   
 ROT27_ENCA:
-SHL r11 r7 27                    # 01001 [9]
+SHL r11 r7 27                
 SHR r10 r7 5   
 JMP ROT_MERGE_ENCA   
 ROT28_ENCA:
@@ -782,21 +770,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT30_ENCA
 AND r12 r20 r9
 BEQ r12 r20 ROT29_ENCA
-SHL r11 r7 28                    # 01001 [9]
+SHL r11 r7 28                
 SHR r10 r7 4   
 JMP ROT_MERGE_ENCA   
 ROT29_ENCA:
-SHL r11 r7 29                    # 01001 [9]
+SHL r11 r7 29                
 SHR r10 r7 3   
 JMP ROT_MERGE_ENCA   
 ROT30_ENCA:
 AND r12 r20 r9
 BEQ r12 r20 ROT31_ENCA
-SHL r11 r7 30                    # 01001 [9]
+SHL r11 r7 30                
 SHR r10 r7 2   
 JMP ROT_MERGE_ENCA   
 ROT31_ENCA:
-SHL r11 r7 31                    # 01001 [9]
+SHL r11 r7 31                
 SHR r10 r7 1
 
 ROT_MERGE_ENCA:
@@ -873,17 +861,17 @@ SHL r11 r7 8                    # 01000 [8]
 SHR r10 r7 24   
 JMP ROT_MERGE_ENCB                 
 ROT9_ENCB:
-SHL r11 r7 9                    # 01001 [9]
+SHL r11 r7 9                
 SHR r10 r7 23   
 JMP ROT_MERGE_ENCB           
 ROT10_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT11_ENCB
-SHL r11 r7 10                    # 01001 [9]
+SHL r11 r7 10                
 SHR r10 r7 22   
 JMP ROT_MERGE_ENCB   
 ROT11_ENCB:
-SHL r11 r7 11                    # 01001 [9]
+SHL r11 r7 11                
 SHR r10 r7 21   
 JMP ROT_MERGE_ENCB   
 ROT12_ENCB:
@@ -891,21 +879,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT14_ENCB
 AND r12 r20 r8
 BEQ r12 r20 ROT13_ENCB
-SHL r11 r7 12                    # 01001 [9]
+SHL r11 r7 12                
 SHR r10 r7 20   
 JMP ROT_MERGE_ENCB   
 ROT13_ENCB:
-SHL r11 r7 13                    # 01001 [9]
+SHL r11 r7 13                
 SHR r10 r7 19   
 JMP ROT_MERGE_ENCB   
 ROT14_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT15_ENCB
-SHL r11 r7 14                    # 01001 [9]
+SHL r11 r7 14                
 SHR r10 r7 18   
 JMP ROT_MERGE_ENCB   
 ROT15_ENCB:
-SHL r11 r7 15                    # 01001 [9]
+SHL r11 r7 15                
 SHR r10 r7 17   
 JMP ROT_MERGE_ENCB   
 ROT16_ENCB:
@@ -917,21 +905,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT18_ENCB
 AND r12 r20 r8
 BEQ r12 r20 ROT17_ENCB
-SHL r11 r7 16                    # 01001 [9]
+SHL r11 r7 16                
 SHR r10 r7 16   
 JMP ROT_MERGE_ENCB   
 ROT17_ENCB:
-SHL r11 r7 17                    # 01001 [9]
+SHL r11 r7 17                
 SHR r10 r7 15   
 JMP ROT_MERGE_ENCB   
 ROT18_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT19_ENCB
-SHL r11 r7 18                    # 01001 [9]
+SHL r11 r7 18                
 SHR r10 r7 14   
 JMP ROT_MERGE_ENCB  
 ROT19_ENCB:
-SHL r11 r7 19                    # 01001 [9]
+SHL r11 r7 19                
 SHR r10 r7 13   
 JMP ROT_MERGE_ENCB   
 ROT20_ENCB:
@@ -939,21 +927,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT22_ENCB
 AND r12 r20 r8
 BEQ r12 r20 ROT21_ENCB
-SHL r11 r7 20                    # 01001 [9]
+SHL r11 r7 20                
 SHR r10 r7 12   
 JMP ROT_MERGE_ENCB   
 ROT21_ENCB:
-SHL r11 r7 21                    # 01001 [9]
+SHL r11 r7 21                
 SHR r10 r7 11   
 JMP ROT_MERGE_ENCB   
 ROT22_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT23_ENCB
-SHL r11 r7 22                    # 01001 [9]
+SHL r11 r7 22                
 SHR r10 r7 10   
 JMP ROT_MERGE_ENCB   
 ROT23_ENCB:
-SHL r11 r7 23                    # 01001 [9]
+SHL r11 r7 23                
 SHR r10 r7 9   
 JMP ROT_MERGE_ENCB   
 ROT24_ENCB:
@@ -963,21 +951,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT26_ENCB
 AND r12 r20 r8
 BEQ r12 r20 ROT25_ENCB
-SHL r11 r7 24                    # 01001 [9]
+SHL r11 r7 24                
 SHR r10 r7 8   
 JMP ROT_MERGE_ENCB   
 ROT25_ENCB:
-SHL r11 r7 25                    # 01001 [9]
+SHL r11 r7 25                
 SHR r10 r7 7   
 JMP ROT_MERGE_ENCB   
 ROT26_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT27_ENCB
-SHL r11 r7 26                    # 01001 [9]
+SHL r11 r7 26                
 SHR r10 r7 6   
 JMP ROT_MERGE_ENCB   
 ROT27_ENCB:
-SHL r11 r7 27                    # 01001 [9]
+SHL r11 r7 27                
 SHR r10 r7 5   
 JMP ROT_MERGE_ENCB   
 ROT28_ENCB:
@@ -985,21 +973,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT30_ENCB
 AND r12 r20 r8
 BEQ r12 r20 ROT29_ENCB
-SHL r11 r7 28                    # 01001 [9]
+SHL r11 r7 28                
 SHR r10 r7 4   
 JMP ROT_MERGE_ENCB   
 ROT29_ENCB:
-SHL r11 r7 29                    # 01001 [9]
+SHL r11 r7 29                
 SHR r10 r7 3   
 JMP ROT_MERGE_ENCB   
 ROT30_ENCB:
 AND r12 r20 r8
 BEQ r12 r20 ROT31_ENCB
-SHL r11 r7 30                    # 01001 [9]
+SHL r11 r7 30                
 SHR r10 r7 2   
 JMP ROT_MERGE_ENCB   
 ROT31_ENCB:
-SHL r11 r7 31                    # 01001 [9]
+SHL r11 r7 31                
 SHR r10 r7 1
 
 ROT_MERGE_ENCB:
@@ -1126,17 +1114,17 @@ SHR r11 r7 8                    # 01000 [8]
 SHL r10 r7 24   
 JMP ROT_MERGE_DECB                 
 ROT9_DECB:
-SHR r11 r7 9                    # 01001 [9]
+SHR r11 r7 9                
 SHL r10 r7 23   
 JMP ROT_MERGE_DECB           
 ROT10_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT11_DECB
-SHR r11 r7 10                    # 01001 [9]
+SHR r11 r7 10                
 SHL r10 r7 22   
 JMP ROT_MERGE_DECB   
 ROT11_DECB:
-SHR r11 r7 11                    # 01001 [9]
+SHR r11 r7 11                
 SHL r10 r7 21   
 JMP ROT_MERGE_DECB   
 ROT12_DECB:
@@ -1144,21 +1132,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT14_DECB
 AND r12 r20 r8
 BEQ r12 r20 ROT13_DECB
-SHR r11 r7 12                    # 01001 [9]
+SHR r11 r7 12                
 SHL r10 r7 20   
 JMP ROT_MERGE_DECB   
 ROT13_DECB:
-SHR r11 r7 13                    # 01001 [9]
+SHR r11 r7 13                
 SHL r10 r7 19   
 JMP ROT_MERGE_DECB   
 ROT14_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT15_DECB
-SHR r11 r7 14                    # 01001 [9]
+SHR r11 r7 14                
 SHL r10 r7 18   
 JMP ROT_MERGE_DECB   
 ROT15_DECB:
-SHR r11 r7 15                    # 01001 [9]
+SHR r11 r7 15                
 SHL r10 r7 17   
 JMP ROT_MERGE_DECB   
 ROT16_DECB:
@@ -1170,21 +1158,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT18_DECB
 AND r12 r20 r8
 BEQ r12 r20 ROT17_DECB
-SHR r11 r7 16                    # 01001 [9]
+SHR r11 r7 16                
 SHL r10 r7 16   
 JMP ROT_MERGE_DECB   
 ROT17_DECB:
-SHR r11 r7 17                    # 01001 [9]
+SHR r11 r7 17                
 SHL r10 r7 15   
 JMP ROT_MERGE_DECB   
 ROT18_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT19_DECB
-SHR r11 r7 18                    # 01001 [9]
+SHR r11 r7 18                
 SHL r10 r7 14   
 JMP ROT_MERGE_DECB  
 ROT19_DECB:
-SHR r11 r7 19                    # 01001 [9]
+SHR r11 r7 19                
 SHL r10 r7 13   
 JMP ROT_MERGE_DECB   
 ROT20_DECB:
@@ -1192,21 +1180,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT22_DECB
 AND r12 r20 r8
 BEQ r12 r20 ROT21_DECB
-SHR r11 r7 20                    # 01001 [9]
+SHR r11 r7 20                
 SHL r10 r7 12   
 JMP ROT_MERGE_DECB   
 ROT21_DECB:
-SHR r11 r7 21                    # 01001 [9]
+SHR r11 r7 21                
 SHL r10 r7 11   
 JMP ROT_MERGE_DECB   
 ROT22_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT23_DECB
-SHR r11 r7 22                    # 01001 [9]
+SHR r11 r7 22                
 SHL r10 r7 10   
 JMP ROT_MERGE_DECB   
 ROT23_DECB:
-SHR r11 r7 23                    # 01001 [9]
+SHR r11 r7 23                
 SHL r10 r7 9   
 JMP ROT_MERGE_DECB   
 ROT24_DECB:
@@ -1216,21 +1204,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT26_DECB
 AND r12 r20 r8
 BEQ r12 r20 ROT25_DECB
-SHR r11 r7 24                    # 01001 [9]
+SHR r11 r7 24                
 SHL r10 r7 8   
 JMP ROT_MERGE_DECB   
 ROT25_DECB:
-SHR r11 r7 25                    # 01001 [9]
+SHR r11 r7 25                
 SHL r10 r7 7   
 JMP ROT_MERGE_DECB   
 ROT26_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT27_DECB
-SHR r11 r7 26                    # 01001 [9]
+SHR r11 r7 26                
 SHL r10 r7 6   
 JMP ROT_MERGE_DECB   
 ROT27_DECB:
-SHR r11 r7 27                    # 01001 [9]
+SHR r11 r7 27                
 SHL r10 r7 5   
 JMP ROT_MERGE_DECB   
 ROT28_DECB:
@@ -1238,21 +1226,21 @@ AND r12 r21 r8
 BEQ r12 r21 ROT30_DECB
 AND r12 r20 r8
 BEQ r12 r20 ROT29_DECB
-SHR r11 r7 28                    # 01001 [9]
+SHR r11 r7 28                
 SHL r10 r7 4   
 JMP ROT_MERGE_DECB   
 ROT29_DECB:
-SHR r11 r7 29                    # 01001 [9]
+SHR r11 r7 29                
 SHL r10 r7 3   
 JMP ROT_MERGE_DECB   
 ROT30_DECB:
 AND r12 r20 r8
 BEQ r12 r20 ROT31_DECB
-SHR r11 r7 30                    # 01001 [9]
+SHR r11 r7 30                
 SHL r10 r7 2   
 JMP ROT_MERGE_DECB   
 ROT31_DECB:
-SHR r11 r7 31                    # 01001 [9]
+SHR r11 r7 31                
 SHL r10 r7 1
 
 ROT_MERGE_DECB:
@@ -1330,17 +1318,17 @@ SHR r11 r7 8                    # 01000 [8]
 SHL r10 r7 24   
 JMP ROT_MERGE_DECA                 
 ROT9_DECA:
-SHR r11 r7 9                    # 01001 [9]
+SHR r11 r7 9                
 SHL r10 r7 23   
 JMP ROT_MERGE_DECA           
 ROT10_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT11_DECA
-SHR r11 r7 10                    # 01001 [9]
+SHR r11 r7 10                
 SHL r10 r7 22   
 JMP ROT_MERGE_DECA   
 ROT11_DECA:
-SHR r11 r7 11                    # 01001 [9]
+SHR r11 r7 11                
 SHL r10 r7 21   
 JMP ROT_MERGE_DECA   
 ROT12_DECA:
@@ -1348,21 +1336,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT14_DECA
 AND r12 r20 r9
 BEQ r12 r20 ROT13_DECA
-SHR r11 r7 12                    # 01001 [9]
+SHR r11 r7 12                
 SHL r10 r7 20   
 JMP ROT_MERGE_DECA   
 ROT13_DECA:
-SHR r11 r7 13                    # 01001 [9]
+SHR r11 r7 13                
 SHL r10 r7 19   
 JMP ROT_MERGE_DECA   
 ROT14_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT15_DECA
-SHR r11 r7 14                    # 01001 [9]
+SHR r11 r7 14                
 SHL r10 r7 18   
 JMP ROT_MERGE_DECA   
 ROT15_DECA:
-SHR r11 r7 15                    # 01001 [9]
+SHR r11 r7 15                
 SHL r10 r7 17   
 JMP ROT_MERGE_DECA   
 ROT16_DECA:
@@ -1374,21 +1362,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT18_DECA
 AND r12 r20 r9
 BEQ r12 r20 ROT17_DECA
-SHR r11 r7 16                    # 01001 [9]
+SHR r11 r7 16                
 SHL r10 r7 16   
 JMP ROT_MERGE_DECA   
 ROT17_DECA:
-SHR r11 r7 17                    # 01001 [9]
+SHR r11 r7 17                
 SHL r10 r7 15   
 JMP ROT_MERGE_DECA   
 ROT18_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT19_DECA
-SHR r11 r7 18                    # 01001 [9]
+SHR r11 r7 18                
 SHL r10 r7 14   
 JMP ROT_MERGE_DECA  
 ROT19_DECA:
-SHR r11 r7 19                    # 01001 [9]
+SHR r11 r7 19                
 SHL r10 r7 13   
 JMP ROT_MERGE_DECA   
 ROT20_DECA:
@@ -1396,21 +1384,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT22_DECA
 AND r12 r20 r9
 BEQ r12 r20 ROT21_DECA
-SHR r11 r7 20                    # 01001 [9]
+SHR r11 r7 20                
 SHL r10 r7 12   
 JMP ROT_MERGE_DECA   
 ROT21_DECA:
-SHR r11 r7 21                    # 01001 [9]
+SHR r11 r7 21                
 SHL r10 r7 11   
 JMP ROT_MERGE_DECA   
 ROT22_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT23_DECA
-SHR r11 r7 22                    # 01001 [9]
+SHR r11 r7 22                
 SHL r10 r7 10   
 JMP ROT_MERGE_DECA   
 ROT23_DECA:
-SHR r11 r7 23                    # 01001 [9]
+SHR r11 r7 23                
 SHL r10 r7 9   
 JMP ROT_MERGE_DECA   
 ROT24_DECA:
@@ -1420,21 +1408,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT26_DECA
 AND r12 r20 r9
 BEQ r12 r20 ROT25_DECA
-SHR r11 r7 24                    # 01001 [9]
+SHR r11 r7 24                
 SHL r10 r7 8   
 JMP ROT_MERGE_DECA   
 ROT25_DECA:
-SHR r11 r7 25                    # 01001 [9]
+SHR r11 r7 25                
 SHL r10 r7 7   
 JMP ROT_MERGE_DECA   
 ROT26_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT27_DECA
-SHR r11 r7 26                    # 01001 [9]
+SHR r11 r7 26                
 SHL r10 r7 6   
 JMP ROT_MERGE_DECA   
 ROT27_DECA:
-SHR r11 r7 27                    # 01001 [9]
+SHR r11 r7 27                
 SHL r10 r7 5   
 JMP ROT_MERGE_DECA   
 ROT28_DECA:
@@ -1442,21 +1430,21 @@ AND r12 r21 r9
 BEQ r12 r21 ROT30_DECA
 AND r12 r20 r9
 BEQ r12 r20 ROT29_DECA
-SHR r11 r7 28                    # 01001 [9]
+SHR r11 r7 28                
 SHL r10 r7 4   
 JMP ROT_MERGE_DECA   
 ROT29_DECA:
-SHR r11 r7 29                    # 01001 [9]
+SHR r11 r7 29                
 SHL r10 r7 3   
 JMP ROT_MERGE_DECA   
 ROT30_DECA:
 AND r12 r20 r9
 BEQ r12 r20 ROT31_DECA
-SHR r11 r7 30                    # 01001 [9]
+SHR r11 r7 30                
 SHL r10 r7 2   
 JMP ROT_MERGE_DECA   
 ROT31_DECA:
-SHR r11 r7 31                    # 01001 [9]
+SHR r11 r7 31                
 SHL r10 r7 1
 
 ROT_MERGE_DECA:
@@ -1474,7 +1462,7 @@ BNE r3 r0 LOOP_DEC              # loop until i = 0
 LW r7 r0 1                      # r7 <- S[1]
 SUB r9 r9 r7                    # r9 <- B = B - S[1]
 LW r7 r0 0                      # r7 <- S[0]
-SUB r8 r8 r7                  # r8 <- A = A - S[0]
+SUB r8 r8 r7                    # r8 <- A = A - S[0]
 
 # A_dec, B_dec offset 44, 45
 SW r8 r0 33
