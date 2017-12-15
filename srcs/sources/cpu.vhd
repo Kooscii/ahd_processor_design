@@ -78,10 +78,10 @@ architecture Behavioral of cpu is
                rs : in STD_LOGIC_VECTOR (4 downto 0);
                rt : in STD_LOGIC_VECTOR (4 downto 0);
                rd : in STD_LOGIC_VECTOR (4 downto 0);
-               wd : in STD_LOGIC_VECTOR (31 downto 0));
---               r31 : in STD_LOGIC_VECTOR (31 downto 0); -- read-only
---               r30 : out STD_LOGIC_VECTOR (31 downto 0);
---               r29 : out STD_LOGIC_VECTOR (31 downto 0));
+               wd : in STD_LOGIC_VECTOR (31 downto 0);
+               r31 : in STD_LOGIC_VECTOR (31 downto 0); -- read-only
+               r30 : out STD_LOGIC_VECTOR (31 downto 0);
+               r29 : out STD_LOGIC_VECTOR (31 downto 0));
     end component;
     
     component alu is
@@ -200,13 +200,13 @@ begin
     -----------------------------------------------------------------------------------------
     -- clock setup
     -----------------------------------------------------------------------------------------
---    U_clk : clk_wiz_0               -- MMCM module 
---        port map (
---            clk_out1 => clk_src,    -- out: 125 MHz
---            resetn => cpu_rst,      -- active-low
---            clk_in1 => clk);        -- in:  100 MHz
+    U_clk : clk_wiz_0               -- MMCM module 
+        port map (
+            clk_out1 => clk_src,    -- out: 125 MHz
+            resetn => cpu_rst,      -- active-low
+            clk_in1 => clk);        -- in:  100 MHz
             
-    clk_src <= clk;               -- or use on-board 100 MHz as clk_src directly
+--    clk_src <= clk;               -- or use on-board 100 MHz as clk_src directly
     
 
     -----------------------------------------------------------------------------------------
@@ -235,21 +235,21 @@ begin
             pc_next => pc);
     
     
-    process(clk_src)
-    begin
-        if rising_edge(clk_src) then
-            if ctrl_regwrt = '1' then
-                case reg_dst is
-                    when "11110" => 
-                        seg_reg <= reg_wd;
-                    when "11101" =>
-                        led_reg <= reg_wd;
-                    when others =>
-                        null;
-                end case;
-            end if;
-        end if;
-    end process;
+--    process(clk_src)
+--    begin
+--        if rising_edge(clk_src) then
+--            if ctrl_regwrt = '1' then
+--                case reg_dst is
+--                    when "11110" => 
+--                        seg_reg <= reg_wd;
+--                    when "11101" =>
+--                        led_reg <= reg_wd;
+--                    when others =>
+--                        null;
+--                end case;
+--            end if;
+--        end if;
+--    end process;
             
     -- inst decompose
     inst_opcode <= inst(31 downto 26);
@@ -284,8 +284,8 @@ begin
                    regwrt => ctrl_regwrt,
                    inst => inst);
     
-    with inst_rs select reg_op1 <= r31_debounced when "11111", reg_rd1 when others;
-    with inst_rt select reg_op2 <= r31_debounced when "11111", reg_rd2 when others;
+--    with inst_rs select reg_op1 <= r31_debounced when "11111", reg_rd1 when others;
+--    with inst_rt select reg_op2 <= r31_debounced when "11111", reg_rd2 when others;
     with ctrl_regdst select reg_dst <= inst_rd when '1', inst_rt when others;
     U_reg_file : reg_file
         port map ( rd1 => reg_rd1,
@@ -296,10 +296,10 @@ begin
                    rs => inst_rs,
                    rt => inst_rt,
                    rd => reg_dst,
-                   wd => reg_wd);
---                   r31 => r31_debounced,
---                   r30 => seg_din,
---                   r29 => led_din);
+                   wd => reg_wd,
+                   r31 => r31_debounced,
+                   r30 => seg_reg,
+                   r29 => led_reg);
                    
     r31_raw_btn_sw (31 downto 21) <= (others=> '0');
     r31_raw_btn_sw (20 downto 16) <= btn;
@@ -318,15 +318,15 @@ begin
 --                   dp => dp,
                    an => an,
                    led => led,
-                   rst => rst,
+                   rst => rst_sync,
                    clk => clk_src);
                    
-    with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_op2 when others;
+    with ctrl_op2src select alu_op2 <= imm_sign_ext when '1', reg_rd2 when others;
     U_alu : alu 
         port map ( result => alu_result,
                    eq => alu_eq,
                    lt => alu_lt,
-                   op1 => reg_op1,
+                   op1 => reg_rd1,
                    op2 => alu_op2,
                    funct => ctrl_funct);
                    
@@ -334,14 +334,14 @@ begin
         port map ( imm32 => imm_sign_ext,
                    imm16 => inst_imm);
     
-    mem_addr <= std_logic_vector(signed(reg_op1)+signed(imm_sign_ext));
+    mem_addr <= std_logic_vector(signed(reg_rd1)+signed(imm_sign_ext));
     U_data_mem : data_mem
         port map ( rd => mem_rd,
                    clk => clk_src,
 --                   rst => rst_sync,
                    we => ctrl_sw,
                    addr => mem_addr,
-                   wd => reg_op2);
+                   wd => reg_rd2);
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
     

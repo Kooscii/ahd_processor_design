@@ -4,6 +4,48 @@
 # JMP addr
 
 #########################################
+#   ERASE ALL DATA
+#########################################
+# erase reg_file
+SUB r0 r0 r0
+SUB r1 r1 r1
+SUB r2 r2 r2
+SUB r3 r3 r3
+SUB r4 r4 r4
+SUB r5 r5 r5
+SUB r6 r6 r6
+SUB r7 r7 r7
+SUB r8 r8 r8
+SUB r9 r9 r9
+SUB r10 r10 r10
+SUB r11 r11 r11
+SUB r12 r12 r12
+SUB r13 r13 r13
+SUB r14 r14 r14
+SUB r15 r15 r15
+SUB r16 r16 r16
+SUB r17 r17 r17
+SUB r18 r18 r18
+SUB r19 r19 r19
+SUB r20 r20 r20
+SUB r21 r21 r21
+SUB r22 r22 r22
+SUB r23 r23 r23
+SUB r24 r24 r24
+SUB r25 r25 r25
+SUB r26 r26 r26
+SUB r27 r27 r27
+SUB r28 r28 r28
+SUB r29 r29 r29
+SUB r30 r30 r30
+SUB r31 r31 r31
+# ERASE data_mem
+ORI r3 r0 128
+SUBI r3 r3 1
+SW r0 r3 0
+BNE r3 r0 -3
+
+#########################################
 #   CONSTANTS
 #########################################
 #   special registers:
@@ -64,14 +106,14 @@ BNE r3 r0 -4
 #   FFFF0004: decryption
 
 ORI r19 r0 1                    # r19 <- main menu index
-ORI r18 r0 0x125                # r18 <- program info
+ORI r18 r0 0x1350               # r18 <- program info
 SHL r18 r18 16
 
 MAIN:
 SHR r28 r31 16
 BNE r28 r0 MAIN                 # wait for all buttons being released
 ORI r29 r0 0                    # turn off led
-ORI r17 r0 5                    # menu index upper bound
+ORI r17 r0 6                    # menu index upper bound
 
 # iteratively check all buttons in a loop
 MAIN_LOOP:
@@ -107,20 +149,26 @@ AND r28 r28 r20
 BNE r28 r20 CHECK_END           # if not pressed, check next btn
 
 ORI r10 r0 1
-BNE r19 r10 1                   # check if index = 1 (KEY_EXP)
+BNE r19 r10 1                   # check if index = 1 (UKEY_INPUT)
 JMP UKEY_INPUT
 
 ORI r10 r0 2
-BNE r19 r10 1                   # check if index = 2 (DIN_INPUT)
-JMP DIN_INPUT
+BNE r19 r10 1                   # check if index = 2 (KEY_EXP)
+JMP KEY_EXP
 
 ORI r10 r0 3
-BNE r19 r10 1                   # check if index = 3 (ENCRYPTION)
-JMP ENCRYPTION
+BNE r19 r10 1                   # check if index = 3 (DIN_INPUT)
+JMP DIN_INPUT
 
 ORI r10 r0 4
-BNE r19 r10 1                   # check if index = 4 (DECRYPTION)
+BNE r19 r10 1                   # check if index = 4 (ENCRYPTION)
+JMP ENCRYPTION
+
+ORI r10 r0 5
+BNE r19 r10 1                   # check if index = 5 (DECRYPTION)
 JMP DECRYPTION
+
+
 
 CHECK_END:
 JMP MAIN_LOOP      
@@ -210,7 +258,7 @@ SW r10 r3 50                    # data[50+i] = data[60+i*2+1]&data[60+i*2]
 SUBI r3 r3 1                    # i -= 1
 BNE r3 r2 LOOP_UKEY_MERGE       # loop until r3 = -1
 
-JMP KEY_EXP                     # goto KEY_EXP
+JMP MAIN                        # goto KEY_EXP
 
 #############################################
 #   Subprogram: DIN_INPUT
@@ -566,9 +614,46 @@ ADDI r5 r5 1                    # k += 1
 BLT r15 r5 LOOP_SKEY            # loop if k < 78
 
 # ORI r18 r0 0x8888
-# SHL r18 r18 16                  # if skey is generated, r18 <- 0x88880000 
+# SHL r18 r18 16                    # if skey is generated, r18 <- 0x88880000 
 
-JMP MAIN                        # return to main
+# display
+ORI r3 r0 0                         # r3 <- i = 0
+ORI r4 r0 25                        # upper bound
+LW r30 r3 0                         # display 32 MSB
+ORI r29 r3 0                        # turn on led(1)
+SHR r28 r31 16
+BNE r28 r0 -2                       # wait for all buttons being released
+
+SKEY_CHECK_BTNL:
+SHR r28 r31 16
+AND r28 r28 r22
+BNE r28 r22 SKEY_CHECK_BTNR         # if not pressed, check next btn
+BEQ r3 r0 1                         # if i = 0, skip decrement
+SUBI r3 r3 1                    
+LW r30 r3 0                         # display 16 MSB
+ORI r29 r3 0                        # turn on led(1)
+SHR r28 r31 16
+AND r28 r28 r22                     # wait release
+BEQ r28 r22 -3
+
+SKEY_CHECK_BTNR:
+SHR r28 r31 16
+AND r28 r28 r23
+BNE r28 r23 SKEY_CHECK_BTND         # if not pressed, check next btn
+BEQ r3 r4 1                         # if i = 25, skip increment
+ADDI r3 r3 1                    
+LW r30 r3 0                         # display 16 MSB
+ORI r29 r3 0                        # turn on led(1)
+SHR r28 r31 16
+AND r28 r28 r23                     # wait release
+BEQ r28 r23 -3
+
+SKEY_CHECK_BTND:
+SHR r28 r31 16
+AND r28 r28 r24
+BNE r28 r24 SKEY_CHECK_BTNL         # if not pressed, check next btn
+
+JMP MAIN                            # return to main
 
 
 ##########################################
@@ -1005,7 +1090,7 @@ SW r8 r0 31
 SW r9 r0 30
 
 # display
-LW r30 r0 31                    # display 16 MSB
+LW r30 r0 31                    # display 32 MSB
 LW r29 r1 90                    # turn on led(1)
 SHR r28 r31 16
 BNE r28 r0 -2                   # wait for all buttons being released
@@ -1014,7 +1099,7 @@ ENC_CHECK_BTNL:
 SHR r28 r31 16
 AND r28 r28 r22
 BNE r28 r22 ENC_CHECK_BTNR      # if not pressed, check next btn
-LW r30 r0 31                    # display 16 MSB
+LW r30 r0 31                    # display 32 MSB
 LW r29 r1 90                    # turn on led(1)
 
 
@@ -1022,7 +1107,7 @@ ENC_CHECK_BTNR:
 SHR r28 r31 16
 AND r28 r28 r23
 BNE r28 r23 ENC_CHECK_BTND      # if not pressed, check next btn
-LW r30 r0 30                    # display 16 LSB
+LW r30 r0 30                    # display 32 LSB
 LW r29 r0 90                    # turn on led(0)
 
 
@@ -1470,7 +1555,7 @@ SW r8 r0 33
 SW r9 r0 32
 
 # display
-LW r30 r0 33                    # display 16 MSB
+LW r30 r0 33                    # display 32 MSB
 LW r29 r1 90                    # turn on led(1)
 SHR r28 r31 16
 BNE r28 r0 -2                   # wait for all buttons being released
@@ -1479,14 +1564,14 @@ DEC_CHECK_BTNL:
 SHR r28 r31 16
 AND r28 r28 r22
 BNE r28 r22 DEC_CHECK_BTNR      # if not pressed, check next btn
-LW r30 r0 33                    # display 16 MSB
+LW r30 r0 33                    # display 32 MSB
 LW r29 r1 90                    # turn on led(1)
 
 DEC_CHECK_BTNR:
 SHR r28 r31 16
 AND r28 r28 r23
 BNE r28 r23 DEC_CHECK_BTND      # if not pressed, check next btn
-LW r30 r0 32                    # display 16 LSB
+LW r30 r0 32                    # display 32 LSB
 LW r29 r0 90                    # turn on led(0)
 
 DEC_CHECK_BTND:

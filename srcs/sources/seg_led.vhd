@@ -73,22 +73,19 @@ begin
             t := t + 1;
             if t = refresh_delay then      -- refresh rate 1000Hz
                 t := 0;
-                led(15 downto 8) <= (others=>'0');
+                an <= "11111111";
                 if i = 0 then
                     i <= 7;
                 else
                     i <= i - 1;
                 end if;
             elsif t = 1 then
-                led(i+8) <= '1';
-            elsif t = 2 then
-                led(15 downto 8) <= (others=>'0');
+                an <= an_code(i);
             end if;
-            led(7 downto 0) <= led_din(7 downto 0);
         end if;
     end process;
     
-    an <= an_code(i);
+    led <= led_din(15 downto 0);
     seg <= seg_code(TO_INTEGER(unsigned(seg_din(i*4+3 downto i*4))));
 --    dp <= '1';
     

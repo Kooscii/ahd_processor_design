@@ -53,7 +53,7 @@ architecture Behavioral of tb_cpu is
 --    signal debug_0 : std_logic_vector (31 downto 0);
 --    signal debug_1 : std_logic_vector (31 downto 0);
     
-    constant clk_period : time := 15 ns;
+    constant clk_period : time := 13.3 ns;
     constant btn_delay : time := clk_period*30;
     file file_VECTORS : text;
     
@@ -88,8 +88,11 @@ architecture Behavioral of tb_cpu is
         
     signal digit: unsigned (3 downto 0);
     signal index: integer;
+    signal ukey : std_logic_vector (127 downto 0) := (others => '0');
+    signal din : std_logic_vector (63 downto 0) := (others => '0');
     signal encryption : std_logic_vector (63 downto 0) := (others => '0');
     signal decryption : std_logic_vector (63 downto 0) := (others => '0');
+    signal display : std_logic_vector (31 downto 0);
     
 begin
 
@@ -147,8 +150,9 @@ begin
     
     process
         variable v_ILINE : line;
-        variable ukey : std_logic_vector(127 downto 0);
-        variable txt : std_logic_vector(63 downto 0);
+        variable ukey_val : std_logic_vector(127 downto 0);
+        variable skey_val : std_logic_vector(31 downto 0);
+        variable txt_val : std_logic_vector(63 downto 0);
         variable expected : std_logic_vector(63 downto 0);    
     begin
         
@@ -165,10 +169,115 @@ begin
         file_open(file_VECTORS, "../randcase.txt",  read_mode);
         check_state <= CHECKING;
         rst <= '1';
-        wait for clk_period*100;
+        wait for clk_period*500;
         wait until falling_edge(clk);
         
-        for i in 1 to 2 loop
+        -- 1000 cases
+        for i in 1 to 1000 loop
+            -- input ukey
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, ukey_val);
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;           
+            for k in 7 downto 0 loop
+                sw <= ukey_val(k*16+15 downto k*16);
+                btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay; 
+                btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
+            end loop;
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+            
+            -- goto menu 2
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            -- run key expansion        
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            ukey <= ukey_val;           
+            wait for clk_period*2600;
+            -- check skey
+            for k in 0 to 25 loop
+                readline(file_VECTORS, v_ILINE);
+                read(v_ILINE, skey_val);
+                assert display = skey_val
+                    report "wrong"
+                        severity failure;
+                btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;    
+            end loop;
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+            
+            -- goto menu 3            
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, txt_val);
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            for k in 3 downto 0 loop
+                sw <= txt_val(k*16+15 downto k*16);
+                btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay; 
+                btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
+            end loop;
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+            
+            -- goto menu 4
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            -- encryption
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            din <= txt_val;
+            wait for clk_period*600;
+            -- read result from 7-segment display and check
+            encryption(63 downto 32) <= display;
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            encryption(31 downto 0) <= display;
+            wait for clk_period;
+            
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, expected);           
+            assert encryption = expected
+                report "wrong"
+                    severity failure;
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+                    
+            -- goto menu 3            
+            btn(2) <= '1'; wait for btn_delay; btn(2) <= '0'; wait for btn_delay;
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, txt_val);
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            for k in 3 downto 0 loop
+                sw <= txt_val(k*16+15 downto k*16);
+                btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay; 
+                btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
+            end loop;
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+            
+            -- goto menu 5
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            -- decryption
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            wait for clk_period*600;
+            
+            -- read result from 7-segment display
+            decryption(63 downto 32) <= display;
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            decryption(31 downto 0) <= display;
+            wait for clk_period;
+            
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, expected);           
+            assert decryption = expected
+                report "wrong"
+                    severity failure;
+                    
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+            
+            -- goto menu 1
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
+
+        end loop;
+                
+        for i in 1 to 100 loop
 --            -- programing
 --            rst <= '1';
 --            for k in 0 to 511 loop
@@ -187,26 +296,44 @@ begin
             
             -- input ukey
             readline(file_VECTORS, v_ILINE);
-            read(v_ILINE, ukey);
+            read(v_ILINE, ukey_val);
             btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;           
             for k in 7 downto 0 loop
-                sw <= ukey(k*16+15 downto k*16);
+                sw <= ukey_val(k*16+15 downto k*16);
                 btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay; 
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
             end loop;
-            
-            -- wait for key expansion
+            -- back to main menu
             btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
+
+            -- goto menu 2
+            btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
+            -- run key expansion        
+            btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+            ukey <= ukey_val;           
             wait for clk_period*2600;
+            -- check skey
+            for k in 0 to 25 loop
+                readline(file_VECTORS, v_ILINE);
+                read(v_ILINE, skey_val);
+                assert display = skey_val
+                    report "wrong"
+                        severity failure;
+                btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;    
+            end loop;
+
+            -- back to main menu
+            btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
             
+            -- goto menu 3            
             btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;         
-            for j in 1 to 5 loop
+            for j in 1 to 10 loop
                 -- input din
                 readline(file_VECTORS, v_ILINE);
-                read(v_ILINE, txt);
+                read(v_ILINE, txt_val);
                 btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
                 for k in 3 downto 0 loop
-                    sw <= txt(k*16+15 downto k*16);
+                    sw <= txt_val(k*16+15 downto k*16);
                     btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay; 
                     btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;
                 end loop;
@@ -215,20 +342,14 @@ begin
                 -- encryption
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
                 btn(0) <= '1'; wait for btn_delay; btn(0) <= '0'; wait for btn_delay;
+                din <= txt_val;
                 wait for clk_period*600;
                 
-                
                 -- read result from 7-segment display
-                for k in 7 downto 0 loop
-                    wait until led(k+8) = '1';
-                    encryption(k*4+3+32 downto k*4+32) <= std_logic_vector(digit);
-                end loop;
+                encryption(63 downto 32) <= display;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
-                for k in 7 downto 0 loop
-                    wait until led(k+8) = '1';
-                    encryption(k*4+3 downto k*4) <= std_logic_vector(digit);
-                end loop;
-                wait until led(15) = '1';
+                encryption(31 downto 0) <= display;
+                wait for clk_period;
                 
                 readline(file_VECTORS, v_ILINE);
                 read(v_ILINE, expected);           
@@ -245,16 +366,10 @@ begin
                 wait for clk_period*600;
                 
                 -- read result from 7-segment display
-                for k in 7 downto 0 loop
-                    wait until led(k+8) = '1';
-                    decryption(k*4+3+32 downto k*4+32) <= std_logic_vector(digit);
-                end loop;
+                decryption(63 downto 32) <= display;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay; 
-                for k in 7 downto 0 loop
-                    wait until led(k+8) = '1';
-                    decryption(k*4+3 downto k*4) <= std_logic_vector(digit);
-                end loop;
-                wait until led(15) = '1';
+                decryption(31 downto 0) <= display;
+                wait for clk_period;
                 
                 readline(file_VECTORS, v_ILINE);
                 read(v_ILINE, expected);           
@@ -271,12 +386,22 @@ begin
              end loop;
              -- back to menu 1: ukey
              btn(2) <= '1'; wait for btn_delay; btn(2) <= '0'; wait for btn_delay; 
+             btn(2) <= '1'; wait for btn_delay; btn(2) <= '0'; wait for btn_delay; 
         end loop;
         
         check_state <= PASSED;
-        wait for 20 ms;
         wait;
                    
+    end process;
+    
+    process
+        variable disp_tmp : std_logic_vector (31 downto 0);
+    begin
+        for k in 7 downto 0 loop
+            wait until an(k) = '0';
+            disp_tmp(k*4+3 downto k*4) := std_logic_vector(digit);
+        end loop;
+        display <= disp_tmp;
     end process;
 
 
