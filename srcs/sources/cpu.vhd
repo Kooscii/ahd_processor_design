@@ -217,7 +217,7 @@ begin
     
     PC_SYNC : process(clk, rst)
     begin
-        if (rst = '1') then 
+        if (rst_sync = '1') then 
             pc <= TO_UNSIGNED(0, 32);
         elsif rising_edge(clk) then
             case pc_src is
