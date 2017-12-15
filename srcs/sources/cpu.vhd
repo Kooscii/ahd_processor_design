@@ -189,24 +189,24 @@ architecture Behavioral of cpu is
     signal clk_src : std_logic;
     signal rst : std_logic;
     
-    component clk_wiz_0 is
-        port (
-            clk_out1: out std_logic;
-            resetn: in std_logic;
-            clk_in1: in std_logic);
-    end component;
+--    component clk_wiz_0 is
+--        port (
+--            clk_out1: out std_logic;
+--            resetn: in std_logic;
+--            clk_in1: in std_logic);
+--    end component;
 
 begin
     -----------------------------------------------------------------------------------------
     -- clock setup
     -----------------------------------------------------------------------------------------
-    U_clk : clk_wiz_0               -- MMCM module 
-        port map (
-            clk_out1 => clk_src,    -- out: 125 MHz
-            resetn => cpu_rst,      -- active-low
-            clk_in1 => clk);        -- in:  100 MHz
+--    U_clk : clk_wiz_0               -- MMCM module 
+--        port map (
+--            clk_out1 => clk_src,    -- out: 125 MHz
+--            resetn => cpu_rst,      -- active-low
+--            clk_in1 => clk);        -- in:  100 MHz
             
---    clk_src <= clk;               -- or use on-board 100 MHz as clk_src directly
+    clk_src <= clk;               -- or use on-board 100 MHz as clk_src directly
     
 
     -----------------------------------------------------------------------------------------

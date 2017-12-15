@@ -53,7 +53,7 @@ architecture Behavioral of tb_cpu is
 --    signal debug_0 : std_logic_vector (31 downto 0);
 --    signal debug_1 : std_logic_vector (31 downto 0);
     
-    constant clk_period : time := 13.3 ns;
+    constant clk_period : time := 20 ns;
     constant btn_delay : time := clk_period*30;
     file file_VECTORS : text;
     
@@ -173,7 +173,7 @@ begin
         wait until falling_edge(clk);
         
         -- 1000 cases
-        for i in 1 to 1000 loop
+        for i in 1 to 5 loop
             -- input ukey
             readline(file_VECTORS, v_ILINE);
             read(v_ILINE, ukey_val);
@@ -277,7 +277,7 @@ begin
 
         end loop;
                 
-        for i in 1 to 100 loop
+        for i in 1 to 2 loop
 --            -- programing
 --            rst <= '1';
 --            for k in 0 to 511 loop
@@ -327,7 +327,7 @@ begin
             
             -- goto menu 3            
             btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;         
-            for j in 1 to 10 loop
+            for j in 1 to 5 loop
                 -- input din
                 readline(file_VECTORS, v_ILINE);
                 read(v_ILINE, txt_val);
