@@ -56,7 +56,7 @@ begin
 process (clk)
 begin
 --    if (rst = '1') then 
---        reg(0 to 30) <= (OTHERS => std_logic_vector( TO_UNSIGNED(0, 32)));
+--        reg(0 to 31) <= (OTHERS => std_logic_vector( TO_UNSIGNED(0, 32)));
     if rising_edge(clk) then
         if we = '1' then -- and TO_INTEGER( unsigned(rd)) > 1 then 
             reg( TO_INTEGER( unsigned(rd))) <= wd;

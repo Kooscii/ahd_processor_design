@@ -41,6 +41,9 @@ end debounce;
 architecture Behavioral of debounce is
     type type_state is (IDLE, PRESSED, RELEASED);
     signal state : type_state := IDLE;
+    
+--    constant cooldown: integer := 10000;
+    constant cooldown: integer := 1;
         
 begin
     
@@ -62,7 +65,7 @@ begin
                     end if;
                 when PRESSED =>     -- down-sampling
                     t := t + 1;
-                    if t > 10000 then
+                    if t = cooldown then
                         if din = '0' then
                             state <= RELEASED;
                         end if;
@@ -70,7 +73,7 @@ begin
                     end if;  
                 when RELEASED =>     -- down-sampling
                     t := t + 1;
-                    if t > 10000 then
+                    if t = cooldown then
                         if din = '0' then
                             state <= IDLE;
                         end if;

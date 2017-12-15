@@ -64,7 +64,8 @@ BNE r3 r0 -4
 #   FFFF0004: decryption
 
 ORI r19 r0 1                    # r19 <- main menu index
-ORI r18 r0 0                    # r18 <- rc5 state
+ORI r18 r0 0x125                # r18 <- program info
+SHL r18 r18 16
 
 MAIN:
 SHR r28 r31 16
@@ -564,8 +565,8 @@ ORI r4 r0 0                     #   j = 0
 ADDI r5 r5 1                    # k += 1
 BLT r15 r5 LOOP_SKEY            # loop if k < 78
 
-ORI r18 r0 0x8888
-SHL r18 r18 16                  # if skey is generated, r18 <- 0x88880000 
+# ORI r18 r0 0x8888
+# SHL r18 r18 16                  # if skey is generated, r18 <- 0x88880000 
 
 JMP MAIN                        # return to main
 

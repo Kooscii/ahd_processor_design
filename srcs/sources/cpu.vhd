@@ -10,8 +10,8 @@ entity cpu is
           btn : in std_logic_vector (4 downto 0);
           -- 7-seg
           seg : out std_logic_vector (6 downto 0);
-          an : out std_logic_vector (7 downto 0);
-          dp : out std_logic
+          an : out std_logic_vector (7 downto 0)
+--          dp : out std_logic
 --          tx : out std_logic;
 --          rx : in std_logic
 --          -- inst update
@@ -26,8 +26,8 @@ end cpu;
 
 architecture Behavioral of cpu is
 
-    -- if fixed instructions
-    signal prog_addr : std_logic_vector (31 downto 0) := (others=>'0');
+--    -- if not fixed instructions
+--    signal prog_addr : std_logic_vector (31 downto 0) := (others=>'0');
     signal prog_wd : std_logic_vector (31 downto 0) := (others=>'0');
     signal prog_clk : std_logic := '0';
     
@@ -51,9 +51,9 @@ architecture Behavioral of cpu is
     component ins_mem is
      Port ( inst : out STD_LOGIC_VECTOR (31 downto 0);
             addr : in STD_LOGIC_VECTOR (31 downto 0);
-            w_addr : in STD_LOGIC_VECTOR (31 downto 0);
+--            w_addr : in STD_LOGIC_VECTOR (31 downto 0);
             wd: in STD_LOGIC_VECTOR (31 downto 0);
-            w_clk: in STD_LOGIC);
+            clk: in STD_LOGIC);
     end component;
     
     component ctrl_unit is
@@ -119,7 +119,7 @@ architecture Behavioral of cpu is
         Port ( seg_din : in STD_LOGIC_VECTOR (31 downto 0);
                led_din : in STD_LOGIC_VECTOR (31 downto 0);
                seg : out STD_LOGIC_VECTOR (6 downto 0);
-               dp : out STD_LOGIC;
+--               dp : out STD_LOGIC;
                an : out STD_LOGIC_VECTOR (7 downto 0);
                led : out STD_LOGIC_VECTOR (15 downto 0);
                rst : in STD_LOGIC;
@@ -192,62 +192,48 @@ architecture Behavioral of cpu is
     component clk_wiz_0 is
         port (
             clk_out1: out std_logic;
-            reset: in std_logic;
+            resetn: in std_logic;
             clk_in1: in std_logic);
     end component;
 
 begin
-
-    rst <= not cpu_rst;
-
---    process (clk, rst)
---        variable setup : std_logic := '0';
---        variable d : integer := 0;
---    begin
---        if rst = '1' then
---            setup := '0';
---            d := 0;
---        elsif rising_edge(clk) then
---            if setup = '1' then
---                clk_div <= not clk_div;
---            else
---                clk_div <= '0';
---                setup := '1';
---                d := 0;
---            end if ;
---        end if;
---    end process;
-
-    U_clk : clk_wiz_0 
-        port map (
-            clk_out1 => clk_src,
-            reset => rst,
-            clk_in1 => clk);
-
---    clk_src <= clk;
+    -----------------------------------------------------------------------------------------
+    -- clock setup
+    -----------------------------------------------------------------------------------------
+--    U_clk : clk_wiz_0               -- MMCM module 
+--        port map (
+--            clk_out1 => clk_src,    -- out: 125 MHz
+--            resetn => cpu_rst,      -- active-low
+--            clk_in1 => clk);        -- in:  100 MHz
+            
+    clk_src <= clk;               -- or use on-board 100 MHz as clk_src directly
     
---    pc_pl4 <= pc + 4;
---    pc_offset <= unsigned(imm_sign_ext(29 downto 0) & "00");
---    pc_src(0) <= ctrl_jump;
---    pc_src(1) <= ctrl_branch and (alu_condi or ctrl_jump);
+
+    -----------------------------------------------------------------------------------------
+    -- reset setup
+    -----------------------------------------------------------------------------------------
+    rst <= not cpu_rst;             -- on-board rst button is active-low, make it active-high
+    U_rst : reset_unit              -- async reset, sync release
+        Port map ( 
+            clk => clk_src,         
+            rst_in => rst,
+            rst_out => rst_sync);  
+
+
+    -----------------------------------------------------------------------------------------
+    -- reset PC
+    -----------------------------------------------------------------------------------------
+    U_pc : pc_unit
+        Port map ( 
+            clk => clk_src,
+            rst => rst_sync,
+            branch => ctrl_branch,
+            condi => alu_condi,
+            jump => ctrl_jump,
+            offset => imm_sign_ext,
+            addr => inst_addr,
+            pc_next => pc);
     
---    PC_SYNC : process(clk_src, rst)
---    begin
---        if (rst = '1') then 
---            pc <= TO_UNSIGNED(0, 32);
---        elsif rising_edge(clk_src) then
---            case pc_src is
---                when "00" =>                    -- next inst
---                    pc <= pc_pl4;                              
---                when "01" =>                    -- jump
---                    pc <= pc_pl4(31 downto 28) & unsigned(inst_addr) & "00" ;
---                when "10" =>                    -- branch
---                    pc <= pc_offset + pc_pl4;
---                when others =>                  -- halt
---                    pc <= pc;
---            end case;
---        end if;
---    end process;
     
     process(clk_src)
     begin
@@ -265,13 +251,6 @@ begin
         end if;
     end process;
             
-        
-    U_rst : reset_unit
-        Port map ( 
-            clk => clk_src,
-            rst_in => rst,
-            rst_out => rst_sync);
-    
     -- inst decompose
     inst_opcode <= inst(31 downto 26);
     inst_rs <= inst(25 downto 21);
@@ -287,10 +266,10 @@ begin
 --    pc <= prog_addr or pc_run;
     U_ins_mem : ins_mem 
        port map ( inst => inst,
-                  addr => std_logic_vector(pc),
-                  w_addr => prog_addr,
+                  addr => pc,
+--                  w_addr => prog_addr,
                   wd => prog_wd,
-                  w_clk => prog_clk);
+                  clk => prog_clk);
     
     with ctrl_bnc_type select alu_condi <= alu_eq when "11", not alu_eq when "01", alu_lt when "10", '0' when others;
     U_ctrl_unit : ctrl_unit
@@ -328,7 +307,7 @@ begin
     U_debounce32 : debounce32 
         port map (
             clk=>clk_src, 
-            rst=>rst, 
+            rst=>rst_sync, 
             din=>r31_raw_btn_sw, 
             dout=>r31_debounced);
                   
@@ -336,7 +315,7 @@ begin
         Port map ( seg_din => seg_reg,
                    led_din => led_reg,
                    seg => seg,
-                   dp => dp,
+--                   dp => dp,
                    an => an,
                    led => led,
                    rst => rst,
@@ -366,8 +345,4 @@ begin
     
     with ctrl_lw select reg_wd <= mem_rd when '1', alu_result when others;
     
---    -- debug signal
---    debug_0 <= led_din;
---    debug_1 <= seg_din;
-
 end Behavioral;

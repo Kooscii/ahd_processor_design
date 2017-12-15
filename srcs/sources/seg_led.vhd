@@ -35,7 +35,7 @@ entity seg_led is
     Port ( seg_din : in STD_LOGIC_VECTOR (31 downto 0);
            led_din : in STD_LOGIC_VECTOR (31 downto 0);
            seg : out STD_LOGIC_VECTOR (6 downto 0);
-           dp : out STD_LOGIC;
+--           dp : out STD_LOGIC;
            an : out std_logic_vector (7 downto 0);
            led : out STD_LOGIC_VECTOR (15 downto 0);
            rst : in STD_LOGIC;
@@ -57,6 +57,10 @@ architecture Behavioral of seg_led is
         "11101111", "11011111", "10111111", "01111111");
     
     signal i : integer := 7;
+    
+--    constant refresh_delay: integer := 50000;
+    constant refresh_delay: integer := 2;
+    
 begin
     
     process (clk, rst)
@@ -67,26 +71,25 @@ begin
             i <= 7;
         elsif rising_edge(clk) then
             t := t + 1;
-            if t = 50000 then      -- refresh rate 1000Hz
+            if t = refresh_delay then      -- refresh rate 1000Hz
                 t := 0;
---                led(15 downto 8) <= (others=>'1');
+                led(15 downto 8) <= (others=>'0');
                 if i = 0 then
                     i <= 7;
                 else
                     i <= i - 1;
                 end if;
             elsif t = 1 then
---                led(i+8) <= '0';
+                led(i+8) <= '1';
+            elsif t = 2 then
+                led(15 downto 8) <= (others=>'0');
             end if;
---            led(7 downto 0) <= led_din(7 downto 0);
+            led(7 downto 0) <= led_din(7 downto 0);
         end if;
     end process;
     
-    led(15 downto 14) <= led_din(15 downto 14);
-    led(11 downto 0) <= led_din(11 downto 0);
-    led(13 downto 12) <= "11";
     an <= an_code(i);
     seg <= seg_code(TO_INTEGER(unsigned(seg_din(i*4+3 downto i*4))));
-    dp <= '1';
+--    dp <= '1';
     
 end Behavioral;
