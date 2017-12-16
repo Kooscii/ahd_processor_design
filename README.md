@@ -1,2 +1,2 @@
 # ahd project - processor design
-Final report in report/submit/part3
+Final report in reports/submit/part3
