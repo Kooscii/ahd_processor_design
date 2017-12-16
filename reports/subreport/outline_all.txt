@@ -1,0 +1,80 @@
+1. Abstract
+    Summarize what we did in this project.
+
+2. Processor Design & Test
+    2.1 Summary
+        Introduce the whole processor. Show the block diagram. 
+        List all the components we have, with a single sentence of introduction. 
+        (including pc, ins_mem, reg_file, ctrl_unit, data_mem, alu, debouncer, seg_led)
+        (debouncer, seg_led only need Implementation)
+        
+    2.2 Component design & test
+        2.2.1 component1
+            contributor: netid (list who design/test/write the report)
+
+            2.2.1.1 Implementation
+                block diagram (use the picture I give)
+
+                IN PORT:
+                    port_name: explanation
+                OUT PORT:
+                    port_name: explanation
+
+                What is this component for? How this component work? 
+
+            2.2.1.2 Testbench
+                What you do in the testbench? Explain what you did with screenshots of your code.
+
+            2.2.1.3 Functional simulation
+                3 Screenshots for all cases, example 1, example 2
+                each screenshot should be follow by a brief explanation
+                Make the screenshots larger and clearer!
+
+            2.2.1.4 Timing simulation
+                3 Screenshots for all cases, example 1, example 2
+                each screenshot should be follow by a brief explanation
+                Make the screenshots larger and clearer!
+
+
+            2.2.1.5 Timing Analysis
+                crtical path delay, latency, propagation delay
+
+        2.2.2 component2
+
+        ......
+ 
+    2.3 Processor Design & test
+        2.3.1 Assmebly compiler
+            How we convert assmebly to machine code that processor can read
+
+        2.3.2 Testbench
+            Idealy we should do random cases testbench for each instruction to verify the processor, but no one did it. So here we report how we set up testbench for sample code1&2 provided in report part 1.
+
+        2.3.3 Functional simulation
+            screenshot and explain
+
+        2.3.4 Timing simulation
+            screenshot and explain
+
+        2.3.5 Analysis
+            utilization, crtical path delay, highest frequency and figure out which path is it
+
+3. RC5 Implementation
+    3.1 Assmebly code
+        3.1.1 FSM diagram
+        3.1.2 Time complexity analysis
+        3.1.3 XOR optimization
+        3.1.4 ROTATE optimization
+
+    3.2 Testbench
+        10 ukey * 1000 text for functional. 2 ukey * 3 text for timing.
+
+    3.3 Fuctional simulation
+        screenshots and explanation.
+        report number of cycles for key_exp, enc, dec here.
+
+    3.4 Timing simulation
+        screenshots and explanation.
+
+4. Summary
+    report cycles, highest freq, utilization, test cases
