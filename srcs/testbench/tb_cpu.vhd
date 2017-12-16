@@ -54,7 +54,7 @@ architecture Behavioral of tb_cpu is
 --    signal debug_1 : std_logic_vector (31 downto 0);
     
     constant clk_period : time := 20 ns;
-    constant btn_delay : time := clk_period*30;
+    constant btn_delay : time := clk_period*35;
     file file_VECTORS : text;
     
     type type_check_state is (CHECKING, FAILED, PASSED);
@@ -198,7 +198,7 @@ begin
                 read(v_ILINE, skey_val);
                 assert display = skey_val
                     report "wrong"
-                        severity failure;
+                        severity error;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;    
             end loop;
             -- back to main menu
@@ -233,7 +233,7 @@ begin
             read(v_ILINE, expected);           
             assert encryption = expected
                 report "wrong"
-                    severity failure;
+                    severity error;
             -- back to main menu
             btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
                     
@@ -267,7 +267,7 @@ begin
             read(v_ILINE, expected);           
             assert decryption = expected
                 report "wrong"
-                    severity failure;
+                    severity error;
                     
             -- back to main menu
             btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
@@ -318,7 +318,7 @@ begin
                 read(v_ILINE, skey_val);
                 assert display = skey_val
                     report "wrong"
-                        severity failure;
+                        severity error;
                 btn(3) <= '1'; wait for btn_delay; btn(3) <= '0'; wait for btn_delay;    
             end loop;
 
@@ -355,7 +355,7 @@ begin
                 read(v_ILINE, expected);           
                 assert encryption = expected
                     report "wrong"
-                        severity failure;
+                        severity error;
                 
                 -- back to main menu
                 btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;
@@ -375,7 +375,7 @@ begin
                 read(v_ILINE, expected);           
                 assert decryption = expected
                     report "wrong"
-                        severity failure;
+                        severity error;
                         
                 -- back to main menu
                 btn(4) <= '1'; wait for btn_delay; btn(4) <= '0'; wait for btn_delay;

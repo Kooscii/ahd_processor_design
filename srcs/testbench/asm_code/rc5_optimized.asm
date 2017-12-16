@@ -1636,3 +1636,17 @@ JMP MAIN                       # return to main
 HAL
 
 # If everything goes right, DATA[40] = DATA[44]; DATA[41] = DATA[45]
+
+AND r6 r6 r26       # r26=0x1f get lower 5 bits
+ORI r7 r7 31
+BNE r6 r7 4
+SHL r10 r8 31 
+SHR r11 r8 1
+ORI r8 r10 r11
+JMP END
+ORI r7 r7 30
+BNE r6 r7 4
+SHL r10 r8 30 
+SHR r11 r8 2
+ORI r8 r10 r11
+JMP END

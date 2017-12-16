@@ -58,8 +58,8 @@ architecture Behavioral of seg_led is
     
     signal i : integer := 7;
     
---    constant refresh_delay: integer := 50000;
-    constant refresh_delay: integer := 2;
+    constant refresh_delay: integer := 50000;
+--    constant refresh_delay: integer := 2;
     
 begin
     

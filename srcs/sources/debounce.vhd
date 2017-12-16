@@ -42,8 +42,8 @@ architecture Behavioral of debounce is
     type type_state is (IDLE, PRESSED, RELEASED);
     signal state : type_state := IDLE;
     
---    constant cooldown: integer := 100000;
-    constant cooldown: integer := 1;
+    constant cooldown: integer := 100000;
+--    constant cooldown: integer := 1;
         
 begin
     
